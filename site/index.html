@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>團購網站 | 人多更划算，一起來揪團</title>
+    <meta name="decsription" content="選商品、加入團購，達標自動成團 ; 未成團自動退款。">
+    
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+    <div class="app">
+        <input type="checkbox" id="nav-toggle" class="nav-toggle" aria-label="開啟或關閉選單">
+        <!--左邊測攔-->
+        <aside class="sidebar" aria-label="側邊選單">
+            <div class="sidbar__head">
+                <a class="brand" href="index.html">LOGO</a>
+                <label for="nav-toggle" class="nav-toggle-label" aria-label="關閉選單">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-with="2" stroke-linecap="round" aria-hidden="true">
+                        <path d="M6 6l12 12M18 6L6 18"/>
+                    </svg>
+                </label>
+            </div>
+            <nav class="menu" aria-label="功能選單">
+                <a class="menu__link is-active" href="index.html">首頁</a>">
+                <a class="menu__link is-active" href="index.html">開團中的商品</a>
+                    <span class="badge">67</span>
+                </a>
+                <!--展開選單 <details> <summary>-->
+                <details class="menu__group" open>
+                    <summary>
+                        <span>已下單的商品</span>
+                        <span class="badge">3</span>
+                    </summary>
+                    <ul class="menu__sub">
+                        <li><a class="menu__link" href="#">商品 A</a></li>
+                        <li><a class="menu__link" href="#">商品 B</a></li>
+                        <li><a class="menu__link" href="#">商品 C</a></li>
+                    </ul>
+                </details>
+                <a class="menu__link" href="#">聯絡我們</a>
+                <details class="menu__group" open>
+                    <summary>
+                        <span>設定</span>
+                    </summary>
+                    <ul class="menu_sub">
+                        <li><a class="menu__link" href="#">個人資料</a></li>
+                        <li><a class="menu__link" href="#">通知設定</a></li>
+                        <li><a class="menu__link" href="#">帳號安全</a></li>
+                    </ul>
+                </details>
+            </nav>
+
+            <!--最底部使用者資訊-->
+            <div class="sidebar__footer">
+                <span class="avatar" aria-hidden="true">👤</span>
+                <span class="user-name">豆漿哥</span>
+            </div>
+            <button type="button" class="logout-btn" aria-label="登出">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                    <polyline points="16 17 21 12 16 7"></polyline>
+                    <line x1="21" y1="12" x2="9" y2="12"></line>
+                </svg>
+                <span class="logout-btn__text">登出</span>
+            </button>
+            </div>
+        </aside>
+        <!--手機點選空白處關閉選單-->
+        <label for="nav-toggle" class="overlay" aria-hidden="true"></label>
+        </div>
+    </body>
+</html>
