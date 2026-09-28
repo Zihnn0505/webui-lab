@@ -13,17 +13,17 @@
         <input type="checkbox" id="nav-toggle" class="nav-toggle" aria-label="開啟或關閉選單">
         <!--左邊測攔-->
         <aside class="sidebar" aria-label="側邊選單">
-            <div class="sidbar__head">
+            <div class="sidebar__head">
                 <a class="brand" href="index.html">LOGO</a>
                 <label for="nav-toggle" class="nav-toggle-label" aria-label="關閉選單">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-with="2" stroke-linecap="round" aria-hidden="true">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
                         <path d="M6 6l12 12M18 6L6 18"/>
                     </svg>
                 </label>
             </div>
             <nav class="menu" aria-label="功能選單">
-                <a class="menu__link is-active" href="index.html">首頁</a>">
-                <a class="menu__link is-active" href="index.html">開團中的商品</a>
+                <a class="menu__link is-active" href="index.html" aria-current="page">首頁</a>
+                <a class="menu__link" href="index.html" aria-current="page">開團中的商品
                     <span class="badge">67</span>
                 </a>
                 <!--展開選單 <details> <summary>-->
@@ -36,6 +36,7 @@
                         <li><a class="menu__link" href="#">商品 A</a></li>
                         <li><a class="menu__link" href="#">商品 B</a></li>
                         <li><a class="menu__link" href="#">商品 C</a></li>
+                        <li><a class="menu__link" href="#">商品 D</a></li>
                     </ul>
                 </details>
                 <a class="menu__link" href="#">聯絡我們</a>
@@ -43,31 +44,147 @@
                     <summary>
                         <span>設定</span>
                     </summary>
-                    <ul class="menu_sub">
-                        <li><a class="menu__link" href="#">個人資料</a></li>
-                        <li><a class="menu__link" href="#">通知設定</a></li>
-                        <li><a class="menu__link" href="#">帳號安全</a></li>
+                    <ul class="menu__sub">
+                        <li><a href="#">個人資料</a></li>
+                        <li><a href="#">通知設定</a></li>
+                        <li><a href="#">帳號安全</a></li>
                     </ul>
                 </details>
+
             </nav>
 
-            <!--最底部使用者資訊-->
-            <div class="sidebar__footer">
+            <div class="sidebar__foot">
                 <span class="avatar" aria-hidden="true">👤</span>
                 <span class="user-name">豆漿哥</span>
             </div>
-            <button type="button" class="logout-btn" aria-label="登出">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
-                    <polyline points="16 17 21 12 16 7"></polyline>
-                    <line x1="21" y1="12" x2="9" y2="12"></line>
-                </svg>
+
+            <button type="button"
+                    class="logout-btn"
+                    aria-label="登出">
                 <span class="logout-btn__text">登出</span>
             </button>
-            </div>
+
         </aside>
         <!--手機點選空白處關閉選單-->
         <label for="nav-toggle" class="overlay" aria-hidden="true"></label>
+
+        <!--右邊主要內容區-->
+        <div class="main">
+            <header class="topbar">
+                <label for="nav-toggle" class="icon-btn menu-btn" aria-label="開啟選單">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M4 7h16M4 12h16M4 17h16"/>
+                    </svg>
+                </label>
+
+                <form class="search" role="search" action="#">
+                    <input type="search" name="q" placeholder="搜尋商品" aria-label="搜尋商品">
+                </form>
+                <a class="icon-btn cart" href="#" aria-label="購物車，2件商品">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M3 4h2l2.4 11.2a1 1 0 0 0 1 .8h8.9a1 1 0 0 0 1-.8L20 8H6"/>
+                        <circle cx="9.5" cy="20" r="1.3"/><circle cx="17" cy="20" r="1.3"/>
+                    </svg>
+                    <span class="cart__count">2</span>
+                </a>
+            </header>
+            
+            <main class="content">
+                <section class="hero" aria-labelledby="hero-title">
+                    <h1 id="hero-title">人多更划算，一起揪團</h1>
+                    <p>選好商品加入團購，達標才成團；沒有成團，款項會自動退回。</p>
+                    <a class="btn" href="#hot">瀏覽開團中的商品</a>
+                </section>
+
+                <!--分類標籤-->
+                <nav aria-label="商品分類">
+                    <ul class="chips">
+                        <li><a class="chip is-active" href="#" aria-current="true">全部</a></li>
+                        <li><a class="chip" href="#">食品</a></li>
+                        <li><a class="chip" href="#">生活用品</a></li>
+                        <li><a class="chip" href="#">3C 配件</a></li>
+                        <li><a class="chip" href="#">服飾</a></li>
+                        <li><a class="chip" href="#">美妝保養</a></li>
+                    </ul>
+                </nav>
+                <section id="hot" aria-labelledby="hot-title">
+                    <h2 id="hot-title" class="section-title">熱門團購</h2>
+                    <ul class="cards">
+                        <li class="card" data-min="50" data-stock="120" data-paid="32" data-held="6">
+                            <div class="card__media" style="--tone:#D6E8DF">
+                                <span class="pill pill--open">募集中</span>
+                            </div>
+                            <div class="card__body">
+                                <h3 class="card__title"><a class="card__link" href="#">商品 A</a></h3>
+                                <p class="card__price">$490</p>
+                                <div class="progress" style="--value:64"
+                                    role="progressbar" aria-label="成團進度"
+                                    aria-valuenow="64" aria-valuemin="0" aria-valuemax="100"></div>
+                                <p class="card__meta">已付款 32／最低 50</p>
+                                <p class="card__foot">
+                                <span class="card__stock">剩餘名額 82 件</span>
+                                <span class="countdown" data-end="2026-10-01T20:00:00+08:00">剩 8 小時</span>
+                                </p>
+                            </div>
+                        </li>
+                        <li class="card" data-min="60" data-stock="80" data-paid="71" data-held="0">
+                            <div class="card__media" style="--tone:#E3DDF0">
+                                <span class="pill pill--done">已成團</span>
+                            </div>
+                            <div class="card__body">
+                                <h3 class="card__title"><a class="card__link" href="#">商品 B</a></h3>
+                                <p class="card__price">$680</p>
+                                <div class="progress" style="--value:100"
+                                    role="progressbar" aria-label="成團進度"
+                                    aria-valuenow="100" aria-valuemin="0" aria-valuemax="100"></div>
+                                <p class="card__meta">已付款 71／最低 60</p>
+                                <p class="card__foot">
+                                <span class="card__stock card__stock--low">只剩 9 件</span>
+                                <span class="countdown" data-end="2026-09-29T20:00:00+08:00">剩 1 天</span>
+                                </p>
+                            </div>
+                        </li>
+                        <li class="card" data-min="100" data-stock="150" data-paid="40" data-held="0">
+                            <div class="card__media" style="--tone:#F3E4C9">
+                                <span class="pill pill--soon">即將截止</span>
+                            </div>
+                            <div class="card__body">
+                                <h3 class="card__title"><a class="card__link" href="#">商品 C</a></h3>
+                                <p class="card__price">$399</p>
+                                <div class="progress" style="--value:40;--fill:var(--c-warn-fill)"
+                                    role="progressbar" aria-label="成團進度"
+                                    aria-valuenow="40" aria-valuemin="0" aria-valuemax="100"></div>
+                                <p class="card__meta">已付款 40／最低 100</p>
+                                <p class="card__foot">
+                                <span class="card__stock">剩餘名額 110 件</span>
+                                <span class="countdown" data-end="2026-09-28T23:30:00+08:00">剩 2 小時</span>
+                                </p>
+                            </div>
+                        </li>
+                        <li class="card" data-min="60" data-stock="200" data-paid="25" data-held="0">
+                            <div class="card__media" style="--tone:#DCE6F2">
+                                <span class="pill pill--open">募集中</span>
+                            </div>
+                            <div class="card__body">
+                                <h3 class="card__title"><a class="card__link" href="#">商品 D</a></h3>
+                                <p class="card__price">$320</p>
+                                <div class="progress" style="--value:42"
+                                    role="progressbar" aria-label="成團進度"
+                                    aria-valuenow="42" aria-valuemin="0" aria-valuemax="100"></div>
+                                <p class="card__meta">已付款 25／最低 60</p>
+                                <p class="card__foot">
+                                <span class="card__stock">剩餘名額 175 件</span>
+                                <span class="countdown" data-end="2026-10-03T12:00:00+08:00">剩 4 天</span>
+                                </p>
+                            </div>
+                        </li>
+                    </ul>
+            </main>
+            <footer class="footer">
+                <a href="#">關於我們</a>
+                <a href="#">聯絡方式</a>
+                <a href="#">服務條款</a>
+            </footer>
         </div>
     </body>
 </html>
