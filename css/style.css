@@ -265,6 +265,10 @@ ul { margin: 0; padding: 0; list-style: none; }
   text-decoration: none;
 }
 
+.menu__sub li {
+    margin-bottom: 10px;
+}
+
 .menu__sub a:hover { background: var(--c-side-hover); }
 
 /* 數量小標籤 */
@@ -698,4 +702,63 @@ ul { margin: 0; padding: 0; list-style: none; }
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
+}
+
+.setting-modal {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.setting-modal[hidden] {
+    display: none;
+}
+
+
+/* 背景遮罩 */
+
+.setting-modal__overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+}
+
+
+/* 小視窗本體 */
+
+.setting-modal__content {
+    position: relative;
+    width: 90%;
+    max-width: 500px;
+    padding: 24px;
+    background: white;
+    border-radius: 12px;
+    z-index: 1;
+}
+
+
+/* 關閉按鈕 */
+
+.setting-modal__close {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    border: none;
+    background: transparent;
+    font-size: 24px;
+    cursor: pointer;
+}
+
+.setting-btn {
+    width: 100%;
+    padding: 0;
+    border: none;
+    background: none;
+    font: inherit;
+    color: inherit;
+    text-align: left;
+    cursor: pointer;
 }

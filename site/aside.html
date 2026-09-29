@@ -1,0 +1,73 @@
+<aside class="sidebar" aria-label="側邊選單">
+
+    <header class="sidebar__head">
+        <a class="brand" href="index.html">LOGO</a>
+        <label for="nav-toggle" class="nav-toggle-label" aria-label="開啟或關閉選單">☰</label>
+    </header>
+
+
+    <nav class="menu" aria-label="功能選單">
+
+        <a class="menu__link" href="index.html">首頁</a>
+        <div id="seller__menu" class="seller-only">
+            <a class="menu__link" href="seller.html">賣家中心</a>
+        </div>
+        <a class="menu__link" href="commodity.html">開團中的商品
+            <span class="badge">67</span>
+        </a>
+        <a class="menu__link" href="order.html">我的訂單
+            <span class="badge">3</span>
+        </a>
+        <a class="menu__link" href="contract.html">聯絡我們</a>
+
+        <details class="menu__group">
+            <summary>設定</summary>
+            <ul class="menu__sub">
+                <li><button type="button" class="setting-btn" data-setting="profile">個人資料</button></li>
+                <li><button type="button" class="setting-btn" data-setting="notification">通知設定</button></li>
+                <li><button type="button" class="setting-btn" data-setting="security">帳號安全</button></li>
+            </ul>
+
+        </details>
+    </nav>
+
+    <footer class="sidebar__foot">
+        <span class="avatar" aria-hidden="true">👤</span>
+        <span class="user-name">使用者</span>
+    </footer>
+
+    <button type="button" class="logout-btn" aria-label="登出">
+        <span class="logout-btn__text">登出</span>
+    </button>
+</aside>
+
+<div id="setting-modal" class="setting-modal" hidden>
+
+    <div class="setting-modal__overlay"></div>
+
+    <div
+        class="setting-modal__content"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="setting-modal-title"
+    >
+
+        <button
+            type="button"
+            class="setting-modal__close"
+            id="setting-modal-close"
+            aria-label="關閉"
+        >
+            ×
+        </button>
+
+        <h2 id="setting-modal-title">
+            設定
+        </h2>
+
+        <div id="setting-modal-body">
+        </div>
+
+    </div>
+
+</div>

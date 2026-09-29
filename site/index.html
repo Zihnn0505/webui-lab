@@ -12,59 +12,7 @@
     <div class="app">
         <input type="checkbox" id="nav-toggle" class="nav-toggle" aria-label="開啟或關閉選單">
         <!--左邊測攔-->
-        <aside class="sidebar" aria-label="側邊選單">
-            <div class="sidebar__head">
-                <a class="brand" href="index.html">LOGO</a>
-                <label for="nav-toggle" class="nav-toggle-label" aria-label="關閉選單">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
-                        <path d="M6 6l12 12M18 6L6 18"/>
-                    </svg>
-                </label>
-            </div>
-            <nav class="menu" aria-label="功能選單">
-                <a class="menu__link is-active" href="index.html" aria-current="page">首頁</a>
-                <a class="menu__link" href="index.html" aria-current="page">開團中的商品
-                    <span class="badge">67</span>
-                </a>
-                <!--展開選單 <details> <summary>-->
-                <details class="menu__group" open>
-                    <summary>
-                        <span>已下單的商品</span>
-                        <span class="badge">3</span>
-                    </summary>
-                    <ul class="menu__sub">
-                        <li><a class="menu__link" href="#">商品 A</a></li>
-                        <li><a class="menu__link" href="#">商品 B</a></li>
-                        <li><a class="menu__link" href="#">商品 C</a></li>
-                        <li><a class="menu__link" href="#">商品 D</a></li>
-                    </ul>
-                </details>
-                <a class="menu__link" href="#">聯絡我們</a>
-                <details class="menu__group" open>
-                    <summary>
-                        <span>設定</span>
-                    </summary>
-                    <ul class="menu__sub">
-                        <li><a href="#">個人資料</a></li>
-                        <li><a href="#">通知設定</a></li>
-                        <li><a href="#">帳號安全</a></li>
-                    </ul>
-                </details>
-
-            </nav>
-
-            <div class="sidebar__foot">
-                <span class="avatar" aria-hidden="true">👤</span>
-                <span class="user-name">豆漿哥</span>
-            </div>
-
-            <button type="button"
-                    class="logout-btn"
-                    aria-label="登出">
-                <span class="logout-btn__text">登出</span>
-            </button>
-
-        </aside>
+        <div id="aside-container"></div>
         <!--手機點選空白處關閉選單-->
         <label for="nav-toggle" class="overlay" aria-hidden="true"></label>
 
@@ -186,5 +134,6 @@
                 <a href="#">服務條款</a>
             </footer>
         </div>
+        <script src="../js/aside.js"></script>
     </body>
 </html>
