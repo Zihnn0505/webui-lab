@@ -1,87 +1,72 @@
-/* =========================================================
-   團購網站首頁樣式表
-   結構：0 設計變數 → 1 基礎重設 → 2 頁面外殼 → 3 側邊欄
-        → 4 頂部列 → 5 主內容 → 6 商品卡片 → 7 頁尾
-        → 8 手機版（收合選單）→ 9 無障礙與偏好設定
-   ========================================================= */
-
-
-/* ---------------------------------------------------------
-   0. 設計變數（CSS Custom Properties）
-   把顏色、間距集中在這裡，之後想換色只要改這一區。
-   --------------------------------------------------------- */
 :root {
-  /* 版面尺寸 */
   --sidebar-w: 272px;
   --radius: 12px;
 
-  /* 主內容區（淺色） */
-  --c-bg: #f1f5f4;          /* 頁面底色 */
-  --c-surface: #ffffff;     /* 卡片、頂部列底色 */
-  --c-tint: #e4f0ea;        /* 主視覺區塊底色 */
-  --c-ink: #14231f;         /* 主要文字 */
-  --c-muted: #566762;       /* 次要文字 */
-  --c-line: #d6dfdc;        /* 邊框線 */
+  --c-bg: #ffffff;           /* 頁面底色 */
+  --c-surface: #ffffff;      /* 卡片、頂部列底色 */
+  --c-tint: #efe8db;         /* 主視覺區塊底色 */
+  --c-ink: #2f2a23;          /* 主要文字 */
+  --c-muted: #766e62;        /* 次要文字 */
+  --c-line: #d8cfbf;         /* 邊框線 */
 
-  /* 品牌綠：按鈕用深綠（白字對比足夠）、進度條用亮一點的綠 */
+  --c-topbar-bg: #e7decd;    /* 上欄 */
+  --c-search-bg: #ffffff;    /* 搜尋框 */
+
   --c-brand: #0e7a55;
   --c-on-brand: #ffffff;
   --c-brand-soft: #2fb585;
-  --c-brand-text: #0b6b47;  /* 淺底上的綠色文字 */
+  --c-brand-text: #0b6b47;  
 
-  /* 提醒色（即將截止）*/
   --c-warn-fill: #f2a541;
   --c-warn-bg: #fdf0d5;
   --c-warn-text: #8a4b08;
 
-  /* 完成色（已成團）*/
   --c-ok-bg: #d9f2e3;
   --c-ok-text: #14603a;
 
-  /* 側邊欄（深綠底） */
-  --c-side-bg: #0f2e28;
-  --c-side-ink: #e6f0ec;
-  --c-side-muted: #93aca4;
+  --c-side-bg: #302b24;
+  --c-side-ink: #f3eee5;
+  --c-side-muted: #bdb4a5;
   --c-side-hover: rgba(255, 255, 255, 0.08);
   --c-side-active: rgba(255, 255, 255, 0.14);
-  --c-side-wait: #fcd34d;
-  --c-side-ok: #86efac;
+  --c-side-wait: #d8b36a;
+  --c-side-ok: #b8c29f;
 
-  /* 字體：優先用使用者裝置上已有的繁中字體，不需要下載任何字型檔 */
   --font: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", "Heiti TC",
           system-ui, -apple-system, "Segoe UI", sans-serif;
 }
 
-/* 使用者手機/電腦設定為「深色模式」時，自動換成這組顏色（選用功能，不需要可整段刪除） */
 @media (prefers-color-scheme: dark) {
   :root {
-    --c-bg: #0b1614;
-    --c-surface: #132320;
-    --c-tint: #12302a;
-    --c-ink: #e6f0ed;
-    --c-muted: #9bb1aa;
-    --c-line: #25403a;
+    /* 深色主題 */
+    --c-bg: #211e19;
+    --c-surface: #2c2821;
+    --c-tint: #373126;
+    --c-ink: #f4efe6;
+    --c-muted: #bdb4a5;
+    --c-line: #4a4338;
+
+    --c-topbar-bg: #b9aa8e;
+    --c-search-bg: #ffffff;
+
     --c-brand: #2fb585;
     --c-on-brand: #04140f;
     --c-brand-text: #6ee7b7;
+
     --c-warn-bg: #3a2a0a;
     --c-warn-text: #fcd34d;
+
     --c-ok-bg: #12352a;
     --c-ok-text: #86efac;
-    --c-side-bg: #0a1f1b;
+
+    --c-side-bg: #181511;
+    --c-side-ink: #f1ebe0;
+    --c-side-muted: #a9a092;
   }
 }
 
 
-/* ---------------------------------------------------------
-   1. 基礎重設
-   --------------------------------------------------------- */
 
-/*
-  【防跑版關鍵 2】box-sizing: border-box
-  預設情況下 width 只算內容，加了 padding / border 之後元素會變寬、
-  撐破容器。border-box 讓 width 包含 padding 與 border，尺寸才可預期。
-*/
 *,
 *::before,
 *::after {
@@ -89,7 +74,6 @@
 }
 
 html {
-  /* 防止 iPhone 橫放時瀏覽器自動放大文字 */
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
 }
@@ -97,15 +81,13 @@ html {
 body {
   margin: 0;
   font-family: var(--font);
-  font-size: 1rem;              /* 用 rem：尊重使用者在瀏覽器設定的字級大小 */
-  line-height: 1.65;            /* 中文行距比英文寬一點，閱讀比較舒服 */
+  font-size: 1rem;              
+  line-height: 1.65;          
   color: var(--c-ink);
   background: var(--c-bg);
-  /* 長網址、長單字不會把版面撐出螢幕外 */
   overflow-wrap: anywhere;
 }
 
-/* 圖片、影片永遠不會比容器寬 */
 img, svg, video {
   max-width: 100%;
   height: auto;
@@ -113,34 +95,23 @@ img, svg, video {
 
 a { color: inherit; }
 
-/* 統一把標題的預設外距清掉，之後自己控制 */
 h1, h2, h3, p { margin: 0; }
 ul { margin: 0; padding: 0; list-style: none; }
 
-/* 鍵盤操作（Tab 鍵）時顯示清楚的外框，這是無障礙的基本要求 */
 :focus-visible {
   outline: 3px solid var(--c-brand-soft);
   outline-offset: 2px;
 }
 
 
-/* ---------------------------------------------------------
-   2. 頁面外殼：左側邊欄 + 右側內容（CSS Grid）
-   --------------------------------------------------------- */
 .app {
   position: relative;
   display: grid;
-  /*
-    兩欄：左邊固定寬度，右邊佔滿剩下空間。
-    minmax(0, 1fr) 的 0 很重要：它允許右欄「縮得比內容還窄」，
-    否則裡面一張寬表格或長字串就會把整頁撐出橫向捲軸。
-  */
   grid-template-columns: var(--sidebar-w) minmax(0, 1fr);
   min-height: 100vh;
-  min-height: 100dvh;           /* dvh = 扣掉手機網址列後的真實高度，舊瀏覽器用上一行 */
+  min-height: 100dvh;          
 }
 
-/* 手機版選單開關：藏起來但仍可用鍵盤聚焦 */
 .nav-toggle {
   position: absolute;
   width: 1px;
@@ -149,28 +120,26 @@ ul { margin: 0; padding: 0; list-style: none; }
   pointer-events: none;
 }
 
-/* 遮罩預設不顯示（桌機用不到），手機版才會啟用，見第 8 區 */
 .overlay { display: none; }
 
 .main {
-  min-width: 0;                 /* 同上：讓 Grid 子元素可以縮小 */
+  min-width: 0;               
   display: flex;
   flex-direction: column;
 }
 
+#aside-container { display: contents; }
 
-/* ---------------------------------------------------------
-   3. 側邊欄
-   --------------------------------------------------------- */
+
 .sidebar {
-  position: sticky;             /* 捲動右側內容時，側邊欄停在原地 */
+  position: sticky;             
   top: 0;
   height: 100vh;
   height: 100dvh;
   display: flex;
   flex-direction: column;
-  overflow-y: auto;             /* 選項太多時，側邊欄自己捲動 */
-  overscroll-behavior: contain; /* 側邊欄捲到底時，不會連帶捲動後面的頁面 */
+  overflow-y: auto;           
+  overscroll-behavior: contain;
   background: var(--c-side-bg);
   color: var(--c-side-ink);
 }
@@ -189,22 +158,21 @@ ul { margin: 0; padding: 0; list-style: none; }
   text-decoration: none;
 }
 
-/* 選單區塊 */
 .menu {
-  flex: 1;                      /* 佔滿中間空間，把使用者資訊擠到最底部 */
+  flex: 1;                      
   display: flex;
   flex-direction: column;
   gap: 2px;
   padding: 8px 12px;
 }
 
-/* 一般連結與 <summary>（展開標題）共用同一套外觀 */
+
 .menu__link,
 .menu__group > summary {
   display: flex;
   align-items: center;
   gap: 10px;
-  min-height: 44px;             /* 44px 是手指可輕鬆點擊的最小高度 */
+  min-height: 44px;            
   padding: 0 12px;
   border-radius: 10px;
   color: var(--c-side-ink);
@@ -222,13 +190,9 @@ ul { margin: 0; padding: 0; list-style: none; }
   font-weight: 600;
 }
 
-/* --- <details> 展開選單 --- */
-
-/* 拿掉瀏覽器預設的小三角形（各家瀏覽器寫法不同，兩行都要） */
 .menu__group > summary { list-style: none; }
 .menu__group > summary::-webkit-details-marker { display: none; }
 
-/* 自己畫一個箭頭：用 border 的右邊與下邊拼成「>」再旋轉 */
 .menu__group > summary::before {
   content: "";
   flex: none;
@@ -236,20 +200,18 @@ ul { margin: 0; padding: 0; list-style: none; }
   height: 7px;
   border-right: 2px solid currentColor;
   border-bottom: 2px solid currentColor;
-  transform: rotate(-45deg);    /* 收合：朝右 */
+  transform: rotate(-45deg);    
   opacity: 0.65;
   transition: transform 0.2s ease;
 }
 
-/* [open] 是 <details> 展開時瀏覽器自動加上的屬性，可以直接拿來當選擇器 */
 .menu__group[open] > summary::before {
-  transform: rotate(45deg);     /* 展開：朝下 */
+  transform: rotate(45deg);    
 }
 
-/* 展開後的子項目 */
 .menu__sub {
   margin: 2px 0 8px;
-  padding-left: 28px;           /* 縮排，表示這是上一層的子項目 */
+  padding-left: 28px;           
 }
 
 .menu__sub a {
@@ -271,9 +233,8 @@ ul { margin: 0; padding: 0; list-style: none; }
 
 .menu__sub a:hover { background: var(--c-side-hover); }
 
-/* 數量小標籤 */
 .badge {
-  margin-left: auto;            /* 推到最右邊 */
+  margin-left: auto;           
   padding: 0 8px;
   border-radius: 99px;
   font-size: 0.75rem;
@@ -282,12 +243,10 @@ ul { margin: 0; padding: 0; list-style: none; }
   color: var(--c-side-muted);
 }
 
-/* 訂單狀態文字 */
 .status { flex: none; font-size: 0.75rem; }
 .status--wait { color: var(--c-side-wait); }
 .status--ok   { color: var(--c-side-ok); }
 
-/* 側邊欄底部：使用者 */
 .sidebar__foot {
   display: flex;
   align-items: center;
@@ -298,7 +257,7 @@ ul { margin: 0; padding: 0; list-style: none; }
 
 .avatar {
   display: grid;
-  place-items: center;          /* 一行讓文字水平垂直置中 */
+  place-items: center;         
   flex: none;
   width: 34px;
   height: 34px;
@@ -309,10 +268,6 @@ ul { margin: 0; padding: 0; list-style: none; }
 
 .user-name { font-size: 0.9rem; }
 
-
-/* ---------------------------------------------------------
-   4. 頂部列
-   --------------------------------------------------------- */
 .topbar {
   position: sticky;
   top: 0;
@@ -321,11 +276,10 @@ ul { margin: 0; padding: 0; list-style: none; }
   align-items: center;
   gap: 12px;
   padding: 10px clamp(16px, 3vw, 32px);
-  background: var(--c-surface);
+  background: var(--c-topbar-bg);
   border-bottom: 1px solid var(--c-line);
 }
 
-/* 圖示按鈕（漢堡、關閉、購物車共用） */
 .icon-btn {
   position: relative;
   display: inline-grid;
@@ -339,11 +293,9 @@ ul { margin: 0; padding: 0; list-style: none; }
 }
 .icon-btn:hover { background: var(--c-side-hover); }
 
-/* 漢堡按鈕與關閉按鈕：桌機不需要，預設隱藏（手機版再打開） */
 .menu-btn,
 .sidebar__close { display: none; }
 
-/* 搜尋框 */
 .search {
   flex: 1 1 200px;
   max-width: 420px;
@@ -357,17 +309,11 @@ ul { margin: 0; padding: 0; list-style: none; }
   border: 1px solid var(--c-line);
   border-radius: 10px;
   color: inherit;
-  background: var(--c-bg);
-  /*
-    【防跑版關鍵 3】輸入框字體不要小於 16px。
-    iPhone Safari 在輸入框字體 < 16px 時，點進去會自動放大整個頁面，
-    使用者還得手動縮回來，看起來就像「跑版」。
-  */
+  background: var(--c-search-bg);
   font: inherit;
   font-size: 1rem;
 }
 
-/* 購物車靠右 */
 .cart { margin-left: auto; }
 
 .cart__count {
@@ -385,21 +331,16 @@ ul { margin: 0; padding: 0; list-style: none; }
   background: var(--c-brand);
 }
 
-
-/* ---------------------------------------------------------
-   5. 主內容
-   --------------------------------------------------------- */
 .content {
   width: 100%;
-  max-width: 1120px;            /* 超寬螢幕時內容不會無限拉長 */
-  margin-inline: auto;          /* 左右自動外距 = 水平置中 */
+  max-width: 1120px;            
+  margin-inline: auto;     
   padding: clamp(16px, 3vw, 32px);
   display: flex;
   flex-direction: column;
   gap: clamp(20px, 3vw, 32px);
 }
 
-/* 主視覺 */
 .hero {
   padding: clamp(20px, 4vw, 40px);
   border: 1px solid var(--c-line);
@@ -408,22 +349,17 @@ ul { margin: 0; padding: 0; list-style: none; }
 }
 
 .hero h1 {
-  /*
-    clamp(最小值, 理想值, 最大值)：文字大小會隨螢幕寬度平滑變化，
-    但不會小於 1.5rem，也不會大於 2.25rem。不用寫一堆 @media 斷點。
-  */
   font-size: clamp(1.5rem, 1.1rem + 2vw, 2.25rem);
   line-height: 1.3;
   margin-bottom: 8px;
 }
 
 .hero p {
-  max-width: 32em;              /* 限制行寬，文字太長眼睛會累 */
+  max-width: 32em;            
   margin-bottom: 20px;
   color: var(--c-muted);
 }
 
-/* 主要按鈕 */
 .btn {
   display: inline-flex;
   align-items: center;
@@ -437,19 +373,18 @@ ul { margin: 0; padding: 0; list-style: none; }
 }
 .btn:hover { filter: brightness(1.08); }
 
-/* 分類標籤：一排放不下時，變成可左右滑動 */
 .chips {
   display: flex;
   gap: 8px;
   overflow-x: auto;
-  padding-bottom: 4px;          /* 預留空間給捲軸，避免蓋到標籤 */
+  padding-bottom: 4px;         
   scroll-snap-type: x proximity;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: thin;
 }
 
 .chip {
-  flex: none;                   /* 標籤不會被壓扁 */
+  flex: none;                 
   display: inline-flex;
   align-items: center;
   min-height: 40px;
@@ -461,7 +396,7 @@ ul { margin: 0; padding: 0; list-style: none; }
   color: var(--c-muted);
   background: var(--c-surface);
   scroll-snap-align: start;
-  white-space: nowrap;          /* 標籤文字不換行 */
+  white-space: nowrap;         
 }
 
 .chip.is-active {
@@ -475,50 +410,37 @@ ul { margin: 0; padding: 0; list-style: none; }
   font-size: 1.2rem;
 }
 
-
-/* ---------------------------------------------------------
-   6. 商品卡片
-   --------------------------------------------------------- */
 .cards {
   display: grid;
   gap: clamp(12px, 2vw, 20px);
-  /*
-    【防跑版關鍵 4】這一行是「自動換排」的核心：
-    - auto-fill：容器放得下幾欄就放幾欄
-    - minmax(min(100%, 220px), 1fr)：每張卡片最窄 220px、最寬平分剩餘空間
-    - 外層的 min(100%, …)：螢幕比 220px 還窄時（例如 200px 小手機），
-      卡片改成 100% 寬，不會被 220px 撐出螢幕外
-    結果：手機 1 欄 → 平板 2 欄 → 桌機 3–4 欄，完全不用寫斷點。
-  */
   grid-template-columns: repeat(auto-fill, minmax(min(100%, 220px), 1fr));
 }
 
 .card {
-  position: relative;           /* 給下面「整張卡片可點」的技巧當定位基準 */
+  position: relative;           
   display: flex;
   flex-direction: column;
-  overflow: hidden;             /* 圖片的直角被圓角裁掉 */
+  overflow: hidden;           
   border: 1px solid var(--c-line);
   border-radius: var(--radius);
   background: var(--c-surface);
 }
 .card:hover { border-color: var(--c-brand-soft); }
 
-/* 圖片區：aspect-ratio 固定 4:3，不管圖多大，卡片高度都整齊 */
+
 .card__media {
   position: relative;
   aspect-ratio: 4 / 3;
-  background: var(--tone, #d6e8df);   /* 沒圖時的底色，來自 HTML 的 --tone */
+  background: var(--tone, #e7decd);  
 }
 
 .card__media img {
   display: block;
   width: 100%;
   height: 100%;
-  object-fit: cover;            /* 圖片填滿區域、不變形（多餘的部分裁掉） */
+  object-fit: cover;           
 }
 
-/* 左上角狀態標籤 */
 .pill {
   position: absolute;
   top: 10px;
@@ -541,17 +463,11 @@ ul { margin: 0; padding: 0; list-style: none; }
 }
 
 .card__title { font-size: 1rem; line-height: 1.4; }
-
-/*
-  「整張卡片都可以點」技巧：
-  把標題連結的 ::after 偽元素撐滿整張卡片（相對於 .card 定位），
-  這樣 HTML 裡只需要一個 <a>，螢幕閱讀器不會念出一堆重複連結。
-*/
 .card__link { text-decoration: none; }
 .card__link::after {
   content: "";
   position: absolute;
-  inset: 0;                     /* top/right/bottom/left 都是 0 的簡寫 */
+  inset: 0;                     
 }
 
 .card__price {
@@ -559,7 +475,6 @@ ul { margin: 0; padding: 0; list-style: none; }
   font-weight: 700;
 }
 
-/* 進度條：用 ::before 畫「已完成」的那一段，寬度由 --value 決定 */
 .progress {
   height: 8px;
   border-radius: 99px;
@@ -570,9 +485,9 @@ ul { margin: 0; padding: 0; list-style: none; }
   content: "";
   display: block;
   height: 100%;
-  width: calc(var(--value, 0) * 1%);         /* 72 → 72% */
+  width: calc(var(--value, 0) * 1%);         
   border-radius: inherit;
-  background: var(--fill, var(--c-brand-soft)); /* 沒指定 --fill 就用預設綠 */
+  background: var(--fill, var(--c-brand-soft)); 
 }
 
 .card__meta {
@@ -580,10 +495,9 @@ ul { margin: 0; padding: 0; list-style: none; }
   color: var(--c-muted);
 }
 
-/* 卡片最底部一行：用 margin-top:auto 推到底，讓每張卡片的底部對齊 */
 .card__foot {
   display: flex;
-  flex-wrap: wrap;              /* 卡片太窄時，兩段文字自動換行不重疊 */
+  flex-wrap: wrap;              
   justify-content: space-between;
   gap: 2px 8px;
   margin-top: auto;
@@ -591,25 +505,18 @@ ul { margin: 0; padding: 0; list-style: none; }
   color: var(--c-muted);
 }
 
-
-/* 剩餘名額：跟「成團進度」是兩件事，所以獨立顯示 */
 .card__stock { color: var(--c-muted); }
-/* 剩 10 件以下用提醒色，成團後仍可能很快額滿 */
 .card__stock--low {
   font-weight: 600;
   color: var(--c-warn-text);
 }
 
-
-/* ---------------------------------------------------------
-   7. 頁尾
-   --------------------------------------------------------- */
 .footer {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
   gap: 8px 24px;
-  margin-top: auto;             /* 內容很少時，頁尾也會貼在螢幕底部 */
+  margin-top: auto;           
   padding: 20px 16px calc(20px + env(safe-area-inset-bottom));
   border-top: 1px solid var(--c-line);
   font-size: 0.875rem;
@@ -619,35 +526,27 @@ ul { margin: 0; padding: 0; list-style: none; }
 .footer a:hover { text-decoration: underline; }
 
 
-/* ---------------------------------------------------------
-   8. 手機／平板（寬度 960px 以下）：側邊欄變成滑出式抽屜
-   --------------------------------------------------------- */
 @media (max-width: 960px) {
 
-  /* 版面改成單欄，右側內容佔滿整個寬度 */
   .app { grid-template-columns: minmax(0, 1fr); }
 
-  /* 側邊欄：從 sticky 改成 fixed，平常藏在螢幕左邊外面 */
   .sidebar {
     position: fixed;
-    inset: 0 auto 0 0;          /* 貼齊左、上、下，寬度自己決定 */
+    inset: 0 auto 0 0;         
     z-index: 30;
-    width: min(86vw, 300px);    /* 最寬 300px，但小手機上不超過螢幕的 86% */
+    width: min(86vw, 300px);  
     padding-top: env(safe-area-inset-top);   /* 避開 iPhone 瀏海 */
     transform: translateX(-100%);
-    visibility: hidden;         /* 收起時連鍵盤 Tab 都跳過它 */
-    /* 收起時：先滑出去，滑完才 hidden（visibility 延遲 0.25 秒） */
+    visibility: hidden;         
     transition: transform 0.25s ease, visibility 0s linear 0.25s;
   }
 
-  /* 核取方塊被勾選 = 選單打開：滑進來 */
-  .nav-toggle:checked ~ .sidebar {
+  .nav-toggle:checked ~ #aside-container .sidebar {
     transform: none;
     visibility: visible;
     transition: transform 0.25s ease, visibility 0s;
   }
 
-  /* 遮罩：打開選單時蓋住右邊內容，點一下就關閉 */
   .overlay {
     display: block;
     position: fixed;
@@ -664,37 +563,25 @@ ul { margin: 0; padding: 0; list-style: none; }
     transition: opacity 0.25s ease, visibility 0s;
   }
 
-  /* 選單打開時，鎖住後面頁面的捲動（:has 較新，不支援的瀏覽器只是不鎖，功能不受影響） */
   body:has(.nav-toggle:checked) { overflow: hidden; }
 
-  /* 顯示漢堡與關閉按鈕 */
   .menu-btn,
   .sidebar__close { display: inline-grid; }
 
-  /* 鍵盤聚焦在（隱藏的）核取方塊時，讓漢堡按鈕顯示外框，使用者知道焦點在哪 */
   .nav-toggle:focus-visible ~ .main .menu-btn {
     outline: 3px solid var(--c-brand-soft);
     outline-offset: 2px;
   }
 
-  /* 頂部列在手機上要避開瀏覽器「瀏海」區域 */
   .topbar { padding-top: calc(10px + env(safe-area-inset-top)); }
 
-  /* 漢堡按鈕在淺色頂部列上的 hover 色（側邊欄那組是給深底用的） */
   .topbar .icon-btn:hover { background: var(--c-bg); }
 }
 
-/* 很小的手機（例如 iPhone SE，寬 375px 以下）再收緊一點 */
 @media (max-width: 400px) {
-  .hero .btn { width: 100%; justify-content: center; }  /* 按鈕撐滿寬度，好按 */
+  .hero .btn { width: 100%; justify-content: center; }
 }
 
-
-/* ---------------------------------------------------------
-   9. 無障礙與使用者偏好
-   --------------------------------------------------------- */
-
-/* 使用者在系統設定了「減少動態效果」時，關掉所有動畫與轉場 */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -734,7 +621,9 @@ ul { margin: 0; padding: 0; list-style: none; }
     width: 90%;
     max-width: 500px;
     padding: 24px;
-    background: white;
+    background: var(--c-surface);
+    color: var(--c-ink);
+    border: 1px solid var(--c-line);
     border-radius: 12px;
     z-index: 1;
 }
