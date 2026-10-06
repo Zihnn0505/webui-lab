@@ -78,7 +78,71 @@
                             </p>
                         </div>
                     </li>
+                    <li class="card" data-min="100" data-stock="150" data-paid="40" data-held="0">
+                        <div class="card__media" style="--tone:#F3E4C9">
+                            <span class="pill pill--soon">即將截止</span>
+                        </div>
+                        <div class="card__body">
+                            <h3 class="card__title"><a class="card__link" href="#">商品名稱</a></h3>
+                            <p class="card__price">$399</p>
+                            <div class="progress" style="--value:40;--fill:var(--c-warn-fill)"
+                                 role="progressbar" aria-label="成團進度"
+                                 aria-valuenow="40" aria-valuemin="0" aria-valuemax="100"></div>
+                            <p class="card__meta">已付款 40／最低 100</p>
+                            <p class="card__foot">
+                                <span class="card__stock">剩餘名額 110 件</span>
+                                <span class="countdown" data-end="2026-09-28T23:30:00+08:00">剩 2 小時</span>
+                            </p>
+                        </div>
+                    </li>
+
+                    <li class="card" data-min="60" data-stock="80" data-paid="71" data-held="0">
+                        <div class="card__media" style="--tone:#E3DDF0">
+                            <span class="pill pill--done">已成團</span>
+                        </div>
+                        <div class="card__body">
+                            <h3 class="card__title"><a class="card__link" href="#">商品名稱</a></h3>
+                            <p class="card__price">$680</p>
+                            <div class="progress" style="--value:100"
+                                 role="progressbar" aria-label="成團進度"
+                                 aria-valuenow="100" aria-valuemin="0" aria-valuemax="100"></div>
+                            <p class="card__meta">已付款 71／最低 60</p>
+                            <p class="card__foot">
+                                <span class="card__stock card__stock--low">只剩 9 件</span>
+                                <span class="countdown" data-end="2026-09-29T20:00:00+08:00">剩 1 天</span>
+                            </p>
+                        </div>
+                    </li>
+
+                    <li class="card card--full" data-min="60" data-stock="90" data-paid="90" data-held="0">
+                        <div class="card__media" style="--tone:#DCE6F2">
+                            <span class="pill pill--full">已額滿</span>
+                        </div>
+                        <div class="card__body">
+                            <h3 class="card__title">商品名稱</h3>
+                            <p class="card__price">$320</p>
+                            <div class="progress" style="--value:100"
+                                 role="progressbar" aria-label="成團進度"
+                                 aria-valuenow="100" aria-valuemin="0" aria-valuemax="100"></div>
+                            <p class="card__meta">已付款 90／最低 60</p>
+                            <p class="card__foot">
+                                <span class="card__stock card__stock--low">剩餘名額 0 件</span>
+                                <span>已結束收單</span>
+                            </p>
+                        </div>
+                    </li>
+
                 </ul>
+                <nav class="pagination" aria-label="分頁">
+                    <a class="page-btn page-btn--arrow" href="#" aria-disabled="true">上一頁</a>
+                    <a class="page-btn is-current" href="#" aria-current="page">1</a>
+                    <a class="page-btn" href="#">2</a>
+                    <a class="page-btn" href="#">3</a>
+                    <span class="page-ellipsis" aria-hidden="true">…</span>
+                    <a class="page-btn" href="#">7</a>
+                    <a class="page-btn page-btn--arrow" href="#">下一頁</a>
+                </nav>
+
             </main>
         </div>
     </div>
