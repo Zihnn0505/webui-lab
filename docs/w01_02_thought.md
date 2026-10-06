@@ -7,5 +7,6 @@ w01~02 Learning Log:
 ## AI Summary
 
 
+
 ### Build Environment
 - 參照MD檔架設環境過程挺順利的沒什麼問題

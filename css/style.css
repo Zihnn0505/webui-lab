@@ -248,7 +248,8 @@ ul { margin: 0; padding: 0; list-style: none; }
 .status--ok   { color: var(--c-side-ok); }
 
 .sidebar__foot {
-  display: flex;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
   gap: 12px;
   padding: 14px 20px;
@@ -267,6 +268,20 @@ ul { margin: 0; padding: 0; list-style: none; }
 }
 
 .user-name { font-size: 0.9rem; }
+
+.logout-btn {
+  white-space: nowrap;
+  padding: 6px 10px;
+  border: 1px solid var(--c-side-muted);
+  border-radius: 6px;
+  color: var(--c-side-ink);
+  background: transparent;
+  font: inherit;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.logout-btn:hover { background: var(--c-side-hover); }
 
 .topbar {
   position: sticky;
