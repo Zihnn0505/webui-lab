@@ -666,3 +666,131 @@ ul { margin: 0; padding: 0; list-style: none; }
     text-align: left;
     cursor: pointer;
 }
+
+/* ----------
+   commodity
+   ---------- */
+.page-head {
+  display: flex;
+  flex-wrap: wrap;              
+  align-items: baseline;
+  gap: 4px 12px;
+  margin-bottom: 18px;
+}
+
+.page-title {
+  font-size: clamp(1.3rem, 1.1rem + 1vw, 1.75rem);
+}
+
+.result-count {
+  font-size: 0.875rem;
+  color: var(--c-muted);
+}
+
+.result-count strong {
+  color: var(--c-ink);
+  font-weight: 700;
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;            
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 16px;
+  margin-bottom: 20px;
+  min-width: 0;                
+                                  
+}
+
+.toolbar > nav {
+    min-width: 0;
+}
+
+.sort {
+  display:flex;
+  align-items: center;
+  gap: 8px;
+  flex: none;
+  min-width: 0;
+  font-size: 0.875rem;
+  color: var(--c-muted);
+}
+
+.sort select {
+  height: 40px;
+  min-width: 0;
+  max-width: 100%;
+  padding: 0 10px;
+  border: 1px  solid var(--c-line);
+  border-radius: 10px;
+  color: var(--c-ink);
+  background: var(--c-surface);
+  font: inherit;
+  font-size: 0.875rem;
+}
+
+.card--full .card__media {
+  filter: grayscale(60%);
+}
+
+.card--full .card__title,
+.card--full .card__price {
+  color: var(--c-muted);         
+}
+
+.pill--full {
+  color: var(--c-muted);
+  background: var(--c-surface);
+}
+
+.pagination {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  margin-top: 28px;
+}
+
+.page-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 40px;
+  height: 40px;
+  padding: 0 10px;
+  border-radius: 10px;
+  font-size: 0.875rem;
+  color: var(--c-muted);
+  text-decoration: none;
+}
+
+.page-btn:hover { background: var(--c-tint); }
+
+.page-btn.is-current {
+  color: var(--c-on-brand);
+  background: var(--c-brand);
+  font-weight: 600;
+}
+
+.page-btn--arrow {
+  font-size: 0.8125rem;
+}
+
+.page-btn[aria-disabled="true"] {
+  color: var(--c-line);
+  pointer-events: none;          
+}
+
+.page-ellipsis {
+  padding: 0 4px;
+  color: var(--c-muted);
+}
+
+@media (max-width: 480px) {
+  .toolbar { flex-direction: column; align-items: stretch; }
+  .toolbar > nav { width: 100%; }
+  .sort { width: 100%; justify-content: space-between; }
+  .sort select { flex: 1; }
+}
