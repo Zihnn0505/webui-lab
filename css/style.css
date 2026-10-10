@@ -1,5 +1,6 @@
 :root {
   --sidebar-w: 272px;
+  --topbar-h: 72px;
   --radius: 12px;
 
   --c-bg: #ffffff;           /* 頁面底色 */
@@ -104,12 +105,23 @@ ul { margin: 0; padding: 0; list-style: none; }
 }
 
 
+/* ===== 全站版面 ===== */
 .app {
   position: relative;
   display: grid;
   grid-template-columns: var(--sidebar-w) minmax(0, 1fr);
   min-height: 100vh;
-  min-height: 100dvh;          
+  min-height: 100dvh;
+  padding-top: var(--topbar-h);
+  transition: grid-template-columns 0.25s ease;
+}
+
+.app.sidebar-collapsed {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.app.sidebar-collapsed #aside-container {
+  display: none;
 }
 
 .nav-toggle {
@@ -128,17 +140,14 @@ ul { margin: 0; padding: 0; list-style: none; }
   flex-direction: column;
 }
 
-#aside-container { display: contents; }
-
-
 .sidebar {
-  position: sticky;             
-  top: 0;
-  height: 100vh;
-  height: 100dvh;
+  position: sticky;
+  top: var(--topbar-h);
+  height: calc(100vh - var(--topbar-h));
+  height: calc(100dvh - var(--topbar-h));
   display: flex;
   flex-direction: column;
-  overflow-y: auto;           
+  overflow-y: auto;
   overscroll-behavior: contain;
   background: var(--c-side-bg);
   color: var(--c-side-ink);
@@ -247,15 +256,6 @@ ul { margin: 0; padding: 0; list-style: none; }
 .status--wait { color: var(--c-side-wait); }
 .status--ok   { color: var(--c-side-ok); }
 
-.sidebar__foot {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 12px;
-  padding: 14px 20px;
-  border-top: 1px solid var(--c-side-hover);
-}
-
 .avatar {
   display: grid;
   place-items: center;         
@@ -268,6 +268,15 @@ ul { margin: 0; padding: 0; list-style: none; }
 }
 
 .user-name { font-size: 0.9rem; }
+
+.topbar__user {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: none;
+}
+
+.topbar > .topbar__user { margin-left: auto; }
 
 .logout-btn {
   white-space: nowrap;
@@ -284,15 +293,18 @@ ul { margin: 0; padding: 0; list-style: none; }
 .logout-btn:hover { background: var(--c-side-hover); }
 
 .topbar {
-  position: sticky;
-  top: 0;
-  z-index: 10;
+  position: fixed;
+  inset: 0 0 auto 0;
+  z-index: 1000;
   display: flex;
   align-items: center;
   gap: 12px;
+  width: 100%;
+  min-height: var(--topbar-h);
   padding: 10px clamp(16px, 3vw, 32px);
-  background: var(--c-topbar-bg);
-  border-bottom: 1px solid var(--c-line);
+  background: var(--c-side-bg);
+  color: var(--c-side-ink);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
 }
 
 .icon-btn {
@@ -308,13 +320,65 @@ ul { margin: 0; padding: 0; list-style: none; }
 }
 .icon-btn:hover { background: var(--c-side-hover); }
 
-.menu-btn,
+.menu-btn {
+  display: inline-grid;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  left: -20px;
+}
+
 .sidebar__close { display: none; }
+
+ .topbar__brand {
+  color: inherit;
+  font-size: 1.1rem;
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+  left:-20px;
+}
+
+.topbar__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.topbar__auth {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  padding: 0 16px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: #a96524;
+  color: #fff;
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.topbar__auth:hover { filter: brightness(1.08); }
+
+.topbar__auth--button {
+  border-color: var(--c-side-muted);
+  background: transparent;
+  color: var(--c-side-ink);
+}
+
+.topbar__auth[hidden] { display: none; }
 
 .search {
   flex: 1 1 200px;
   max-width: 420px;
   min-width: 0;
+  margin-left: 12px;
 }
 
 .search input {
@@ -329,7 +393,7 @@ ul { margin: 0; padding: 0; list-style: none; }
   font-size: 1rem;
 }
 
-.cart { margin-left: auto; }
+.cart { margin-left: 0; }
 
 .cart__count {
   position: absolute;
@@ -440,6 +504,7 @@ ul { margin: 0; padding: 0; list-style: none; }
   border-radius: var(--radius);
   background: var(--c-surface);
 }
+.card[hidden] { display: none; }
 .card:hover { border-color: var(--c-brand-soft); }
 
 
@@ -542,22 +607,29 @@ ul { margin: 0; padding: 0; list-style: none; }
 
 
 @media (max-width: 960px) {
+  .app,
+  .app.sidebar-collapsed {
+    grid-template-columns: minmax(0, 1fr);
+  }
 
-  .app { grid-template-columns: minmax(0, 1fr); }
+  .app.sidebar-collapsed #aside-container {
+    display: contents;
+  }
 
-  .sidebar {
+  #aside-container .sidebar {
     position: fixed;
-    inset: 0 auto 0 0;         
-    z-index: 30;
-    width: min(86vw, 300px);  
-    padding-top: env(safe-area-inset-top);   /* 避開 iPhone 瀏海 */
+    inset: var(--topbar-h) auto 0 0;
+    z-index: 1100;
+    width: min(86vw, 300px);
+    height: calc(100vh - var(--topbar-h));
+    height: calc(100dvh - var(--topbar-h));
     transform: translateX(-100%);
-    visibility: hidden;         
+    visibility: hidden;
     transition: transform 0.25s ease, visibility 0s linear 0.25s;
   }
 
-  .nav-toggle:checked ~ #aside-container .sidebar {
-    transform: none;
+  .app:not(.sidebar-collapsed) #aside-container .sidebar {
+    transform: translateX(0);
     visibility: visible;
     transition: transform 0.25s ease, visibility 0s;
   }
@@ -565,36 +637,28 @@ ul { margin: 0; padding: 0; list-style: none; }
   .overlay {
     display: block;
     position: fixed;
-    inset: 0;
-    z-index: 20;
-    background: rgba(0, 0, 0, 0.5);
+    inset: var(--topbar-h) 0 0;
+    z-index: 1050;
+    background: rgba(0, 0, 0, 0.45);
     opacity: 0;
     visibility: hidden;
     transition: opacity 0.25s ease, visibility 0s linear 0.25s;
   }
-  .nav-toggle:checked ~ .overlay {
+
+  .app:not(.sidebar-collapsed) ~ .overlay,
+  .app:not(.sidebar-collapsed) .overlay {
     opacity: 1;
     visibility: visible;
     transition: opacity 0.25s ease, visibility 0s;
   }
 
-  body:has(.nav-toggle:checked) { overflow: hidden; }
-
-  .menu-btn,
   .sidebar__close { display: inline-grid; }
-
-  .nav-toggle:focus-visible ~ .main .menu-btn {
-    outline: 3px solid var(--c-brand-soft);
-    outline-offset: 2px;
-  }
-
   .topbar { padding-top: calc(10px + env(safe-area-inset-top)); }
-
-  .topbar .icon-btn:hover { background: var(--c-bg); }
 }
 
 @media (max-width: 400px) {
   .hero .btn { width: 100%; justify-content: center; }
+  .topbar__user .user-name { display: none; }
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -9,6 +9,7 @@ fetch("/aside.html")
         document.querySelector("#aside-container").innerHTML = html;
         setActiveMenu();
         setupSettingModal();
+        setupSidebarToggle();
     })
     .catch(error => {
         console.error(error);
@@ -64,5 +65,36 @@ function setupSettingModal() {
     });
     overlay.addEventListener("click", () => {
         modal.hidden = true;
+    });
+}
+
+// Topbar 按鈕控制側邊欄；桌機收合、手機抽屜式開啟
+function setupSidebarToggle() {
+    const app = document.querySelector(".app");
+    const button = document.querySelector("#sidebar-toggle");
+    const overlay = document.querySelector(".overlay");
+    if (!app || !button) return;
+
+    const mobileQuery = window.matchMedia("(max-width: 960px)");
+
+    function setCollapsed(collapsed) {
+        app.classList.toggle("sidebar-collapsed", collapsed);
+        button.setAttribute("aria-expanded", String(!collapsed));
+        button.setAttribute("aria-label", collapsed ? "開啟側邊欄" : "收合側邊欄");
+    }
+
+    // 桌機預設展開；手機預設收合，避免一進頁面就遮住內容
+    setCollapsed(mobileQuery.matches);
+
+    button.addEventListener("click", () => {
+        setCollapsed(!app.classList.contains("sidebar-collapsed"));
+    });
+
+    if (overlay) {
+        overlay.addEventListener("click", () => setCollapsed(true));
+    }
+
+    mobileQuery.addEventListener("change", event => {
+        setCollapsed(event.matches);
     });
 }
