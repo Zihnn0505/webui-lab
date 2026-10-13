@@ -45,7 +45,122 @@
             </header>
 
             <main class="content">
-                <!-- 聯絡我們內容 -->
+
+                <div class="page-head">
+                    <h1 class="page-title">聯絡我們</h1>
+                    <p class="result-count">有任何問題都可以問我們，通常 1 個工作天內回覆</p>
+                </div>
+
+                <!-- .contact-wrap 是容器查詢的「量尺」：左右並排或上下排，看的是這塊實際有多寬，不是螢幕多寬 -->
+                <div class="contact-wrap">
+                    <div class="contact-layout">
+
+                        <section class="contact-card" aria-labelledby="form-title">
+                            <h2 id="form-title" class="contact-card__title">寄一則訊息給我們</h2>
+
+                            <!--
+                              目前沒有後端，action="#" 只是佔位。
+                              required 是瀏覽器內建的檢查：沒填、email 格式不對，按送出時會直接提示，不用寫 JS。
+                              autocomplete 讓瀏覽器可以幫忙帶入姓名、email。
+                            -->
+                            <form class="contact-form" action="#" method="post">
+
+                                <div class="contact-row">
+                                    <div class="contact-field">
+                                        <label class="contact-field__label" for="c-name">姓名 <span class="contact-field__req" aria-hidden="true">＊</span></label>
+                                        <input class="contact-input" id="c-name" name="name" type="text" autocomplete="name" required>
+                                    </div>
+                                    <div class="contact-field">
+                                        <label class="contact-field__label" for="c-email">Email <span class="contact-field__req" aria-hidden="true">＊</span></label>
+                                        <input class="contact-input" id="c-email" name="email" type="email" autocomplete="email" required>
+                                    </div>
+                                </div>
+
+                                <div class="contact-row">
+                                    <div class="contact-field">
+                                        <label class="contact-field__label" for="c-topic">問題類型 <span class="contact-field__req" aria-hidden="true">＊</span></label>
+                                        <select class="contact-input" id="c-topic" name="topic" required>
+                                            <option value="" selected disabled>請選擇</option>
+                                            <option value="order">訂單問題</option>
+                                            <option value="group">團購問題</option>
+                                            <option value="seller">賣家相關</option>
+                                            <option value="account">帳號問題</option>
+                                            <option value="other">其他</option>
+                                        </select>
+                                    </div>
+                                    <div class="contact-field">
+                                        <label class="contact-field__label" for="c-order">訂單編號（選填）</label>
+                                        <input class="contact-input" id="c-order" name="order_no" type="text" placeholder="例如 #20260925-14" aria-describedby="c-order-hint">
+                                        <p class="contact-field__hint" id="c-order-hint">訂單問題請附上編號，我們能更快處理</p>
+                                    </div>
+                                </div>
+
+                                <div class="contact-field">
+                                    <label class="contact-field__label" for="c-message">訊息內容 <span class="contact-field__req" aria-hidden="true">＊</span></label>
+                                    <textarea class="contact-input contact-input--area" id="c-message" name="message" rows="6" required></textarea>
+                                </div>
+
+                                <div class="contact-submit">
+                                    <button type="submit" class="btn">送出訊息</button>
+                                    <p class="contact-submit__note"><span class="contact-field__req" aria-hidden="true">＊</span> 為必填欄位</p>
+                                </div>
+
+                                <!-- 送出成功的訊息：之後 JS 要顯示時，拿掉 hidden 即可（role="status" 會讓螢幕閱讀器自動念出來） -->
+                                <p class="contact-status" role="status" hidden>已收到你的訊息，我們會盡快回覆。</p>
+                            </form>
+                        </section>
+
+                        <aside class="contact-card" aria-labelledby="info-title">
+                            <h2 id="info-title" class="contact-card__title">聯絡資訊</h2>
+                            <dl class="contact-info">
+                                <div class="contact-info__item">
+                                    <dt>客服信箱</dt>
+                                    <dd><a href="mailto:support@example.com">support@example.com</a></dd>
+                                </div>
+                                <div class="contact-info__item">
+                                    <dt>服務時間</dt>
+                                    <dd>週一至週五 09:00–18:00</dd>
+                                </div>
+                                <div class="contact-info__item">
+                                    <dt>回覆時間</dt>
+                                    <dd>1 個工作天內</dd>
+                                </div>
+                            </dl>
+                        </aside>
+
+                    </div>
+                </div>
+
+                <section class="contact-faq" aria-labelledby="faq-title">
+                    <h2 id="faq-title" class="contact-faq__title">常見問題</h2>
+                    <!--
+                      <details> 是 HTML 內建的展開／收合，不用 JS，鍵盤（Enter／Space）也能操作。
+                      name="faq" 讓同一組一次只會展開一個（較新的瀏覽器支援，不支援的只是可以同時展開多個，不影響使用）。
+                    -->
+                    <div class="contact-faq__list">
+                        <details class="contact-faq__item" name="faq">
+                            <summary>團購沒有成團會怎麼樣？</summary>
+                            <p>截止時如果已付款的訂購量沒有達到成團最低數量，這筆團購會自動取消，已付款的訂單也會自動取消並退款，不需要自己申請。</p>
+                        </details>
+                        <details class="contact-faq__item" name="faq">
+                            <summary>什麼時候會出貨？</summary>
+                            <p>成團之後由賣家安排出貨。賣家標記出貨後，「我的訂單」裡的狀態會變成「已出貨」，並顯示物流單號。</p>
+                        </details>
+                        <details class="contact-faq__item" name="faq">
+                            <summary>下單後可以取消嗎？</summary>
+                            <p>狀態是「待付款」的訂單，可以直接在「我的訂單」自行取消。已經付款的訂單，在成團之前如果需要取消，請用上面的表單聯絡我們，並附上訂單編號。</p>
+                        </details>
+                        <details class="contact-faq__item" name="faq">
+                            <summary>「剩餘名額」是怎麼算的？</summary>
+                            <p>剩餘名額 ＝ 庫存 － 已付款 － 預扣中。「待付款」的訂單會先暫時佔住名額，逾時沒有付款就會釋放，所以名額會隨時間變動。</p>
+                        </details>
+                        <details class="contact-faq__item" name="faq">
+                            <summary>我想自己開團，要怎麼做？</summary>
+                            <p>到<a href="seller.html">賣家中心</a>，按「建立新團購」，設定商品規格、庫存、成團最低數量和截止時間，發布後就會出現在「開團中的商品」。</p>
+                        </details>
+                    </div>
+                </section>
+
             </main>
         </div>
     </div>

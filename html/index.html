@@ -57,18 +57,18 @@
                 <!--分類標籤-->
                 <nav aria-label="商品分類">
                     <ul class="chips">
-                        <li><a class="chip is-active" href="#" aria-current="true">全部</a></li>
-                        <li><a class="chip" href="#">食品</a></li>
-                        <li><a class="chip" href="#">生活用品</a></li>
-                        <li><a class="chip" href="#">3C 配件</a></li>
-                        <li><a class="chip" href="#">服飾</a></li>
-                        <li><a class="chip" href="#">美妝保養</a></li>
+                        <li><a class="chip is-active" href="#" data-category="all" aria-current="true">全部</a></li>
+                        <li><a class="chip" href="#" data-category="food">食品</a></li>
+                        <li><a class="chip" href="#" data-category="daily">生活用品</a></li>
+                        <li><a class="chip" href="#" data-category="electronics">3C 配件</a></li>
+                        <li><a class="chip" href="#" data-category="clothing">服飾</a></li>
+                        <li><a class="chip" href="#" data-category="beauty">美妝保養</a></li>
                     </ul>
                 </nav>
                 <section id="hot" aria-labelledby="hot-title">
                     <h2 id="hot-title" class="section-title">熱門團購</h2>
                     <ul class="cards">
-                        <li class="card" data-min="50" data-stock="120" data-paid="32" data-held="6">
+                        <li class="card" data-category="food" data-min="50" data-stock="120" data-paid="32" data-held="6">
                             <div class="card__media" style="--tone:#D6E8DF">
                                 <span class="pill pill--open">募集中</span>
                             </div>
@@ -85,7 +85,7 @@
                                 </p>
                             </div>
                         </li>
-                        <li class="card" data-min="60" data-stock="80" data-paid="71" data-held="0">
+                        <li class="card" data-category="daily" data-min="60" data-stock="80" data-paid="71" data-held="0">
                             <div class="card__media" style="--tone:#E3DDF0">
                                 <span class="pill pill--done">已成團</span>
                             </div>
@@ -102,7 +102,7 @@
                                 </p>
                             </div>
                         </li>
-                        <li class="card" data-min="100" data-stock="150" data-paid="40" data-held="0">
+                        <li class="card" data-category="electronics" data-min="100" data-stock="150" data-paid="40" data-held="0">
                             <div class="card__media" style="--tone:#F3E4C9">
                                 <span class="pill pill--soon">即將截止</span>
                             </div>
@@ -119,7 +119,7 @@
                                 </p>
                             </div>
                         </li>
-                        <li class="card" data-min="60" data-stock="200" data-paid="25" data-held="0">
+                        <li class="card" data-category="clothing" data-min="60" data-stock="200" data-paid="25" data-held="0">
                             <div class="card__media" style="--tone:#DCE6F2">
                                 <span class="pill pill--open">募集中</span>
                             </div>
