@@ -45,7 +45,201 @@
             </header>
                 
             <main class="content">
-                <!-- 訂單內容 -->
+
+                <div class="page-head">
+                    <h1 class="page-title">我的訂單</h1>
+                    <p class="result-count" aria-live="polite">共 <strong>6</strong> 筆訂單</p>
+                </div>
+
+                <!-- 篩選用的 chips（按下去只是換顯示哪些訂單，所以用 button，不是連結）。data-filter 對應每張卡片的 data-status -->
+                <nav class="order-filter" aria-label="依訂單狀態篩選">
+                    <ul class="chips">
+                        <li><button type="button" class="chip is-active" data-filter="all" aria-pressed="true">全部</button></li>
+                        <li><button type="button" class="chip" data-filter="unpaid" aria-pressed="false">待付款</button></li>
+                        <li><button type="button" class="chip" data-filter="waiting" aria-pressed="false">待成團</button></li>
+                        <li><button type="button" class="chip" data-filter="preparing" aria-pressed="false">準備出貨</button></li>
+                        <li><button type="button" class="chip" data-filter="shipped" aria-pressed="false">已出貨</button></li>
+                        <li><button type="button" class="chip" data-filter="done" aria-pressed="false">已完成</button></li>
+                        <li><button type="button" class="chip" data-filter="cancelled" aria-pressed="false">已取消／已退款</button></li>
+                    </ul>
+                </nav>
+
+                <!--
+                  一張卡片 = 一筆訂單；一筆訂單裡可以有多個商品（.order-item）。
+                  跟 commodity 的「一張卡片 = 一個團購商品」差一層，所以結構是：
+                    .order-card__head   訂單編號、下單時間、狀態
+                    .order-items        一到多個商品列
+                    .order-card__foot   總金額、操作按鈕
+                    .order-card__hint   補充說明（付款期限、自動退款說明…），沒有就不放
+                -->
+                <ul class="order-list">
+                    <li class="order-card" data-status="unpaid">
+                        <div class="order-card__head">
+                            <p class="order-card__id">
+                                <span class="order-card__no">訂單編號 #20261011-08</span>
+                                <time datetime="2026-10-11T14:22:00+08:00">2026/10/11 14:22</time>
+                            </p>
+                            <span class="order-badge order-badge--unpaid">待付款</span>
+                        </div>
+                        <ul class="order-items">
+                            <li class="order-item">
+                                <div class="order-item__thumb" style="--tone:#D6E8DF" aria-hidden="true"></div>
+                                <div class="order-item__info">
+                                    <a class="order-item__name" href="#">手工餅乾禮盒</a>
+                                    <span class="order-item__spec">原味／數量 2</span>
+                                </div>
+                                <span class="order-item__price">$980</span>
+                            </li>
+                        </ul>
+                        <div class="order-card__foot">
+                            <p class="order-card__total">總計 <strong>$980</strong></p>
+                            <div class="order-actions">
+                                <button type="button" class="order-action">取消訂單</button>
+                                <a class="order-action order-action--primary" href="#">去付款</a>
+                            </div>
+                        </div>
+                        <p class="order-card__hint">請在 <time datetime="2026-10-11T15:22:00+08:00">10/11 15:22</time> 前完成付款，逾時將自動取消訂單</p>
+                    </li>
+                    <li class="order-card" data-status="waiting">
+                        <div class="order-card__head">
+                            <p class="order-card__id">
+                                <span class="order-card__no">訂單編號 #20261009-21</span>
+                                <time datetime="2026-10-09T09:05:00+08:00">2026/10/09 09:05</time>
+                            </p>
+                            <span class="order-badge order-badge--waiting">待成團</span>
+                        </div>
+                        <ul class="order-items">
+                            <li class="order-item">
+                                <div class="order-item__thumb" style="--tone:#F3E4C9" aria-hidden="true"></div>
+                                <div class="order-item__info">
+                                    <a class="order-item__name" href="#">有機水果箱</a>
+                                    <span class="order-item__spec">標準箱／數量 1</span>
+                                </div>
+                                <span class="order-item__price">$399</span>
+                            </li>
+                        </ul>
+                        <div class="order-card__foot">
+                            <p class="order-card__total">總計 <strong>$399</strong></p>
+                            <div class="order-actions">
+                                <a class="order-action" href="#">查看成團進度</a>
+                            </div>
+                        </div>
+                        <p class="order-card__hint">目前已付款 40／最低 100，<time datetime="2026-10-12T09:00:00+08:00">10/12 09:00</time> 截止；未達標會自動取消並退款，不需要自己申請</p>
+                    </li>
+                    <li class="order-card" data-status="preparing">
+                        <div class="order-card__head">
+                            <p class="order-card__id">
+                                <span class="order-card__no">訂單編號 #20260925-14</span>
+                                <time datetime="2026-09-25T20:40:00+08:00">2026/09/25 20:40</time>
+                            </p>
+                            <span class="order-badge order-badge--preparing">已成團／準備出貨</span>
+                        </div>
+                        <ul class="order-items">
+                            <li class="order-item">
+                                <div class="order-item__thumb" style="--tone:#E3DDF0" aria-hidden="true"></div>
+                                <div class="order-item__info">
+                                    <a class="order-item__name" href="#">保溫杯組</a>
+                                    <span class="order-item__spec">藍色／數量 1</span>
+                                </div>
+                                <span class="order-item__price">$680</span>
+                            </li>
+                        </ul>
+                        <div class="order-card__foot">
+                            <p class="order-card__total">總計 <strong>$680</strong></p>
+                            <div class="order-actions">
+                                <button type="button" class="order-action" disabled>等待賣家出貨</button>
+                            </div>
+                        </div>
+                    </li>
+                    <li class="order-card" data-status="shipped">
+                        <div class="order-card__head">
+                            <p class="order-card__id">
+                                <span class="order-card__no">訂單編號 #20260920-05</span>
+                                <time datetime="2026-09-20T11:15:00+08:00">2026/09/20 11:15</time>
+                            </p>
+                            <span class="order-badge order-badge--shipped">已出貨</span>
+                        </div>
+                        <ul class="order-items">
+                            <li class="order-item">
+                                <div class="order-item__thumb" style="--tone:#DCE6F2" aria-hidden="true"></div>
+                                <div class="order-item__info">
+                                    <a class="order-item__name" href="#">手沖咖啡濾掛</a>
+                                    <span class="order-item__spec">淺烘焙／數量 3</span>
+                                </div>
+                                <span class="order-item__price">$960</span>
+                            </li>
+                        </ul>
+                        <div class="order-card__foot">
+                            <p class="order-card__total">總計 <strong>$960</strong></p>
+                            <div class="order-actions">
+                                <a class="order-action" href="#">查看物流</a>
+                                <button type="button" class="order-action order-action--primary">確認收貨</button>
+                            </div>
+                        </div>
+                        <p class="order-card__hint">物流單號 TC-1234-5678-90，收到商品後請按「確認收貨」</p>
+                    </li>
+                    <li class="order-card" data-status="done">
+                        <div class="order-card__head">
+                            <p class="order-card__id">
+                                <span class="order-card__no">訂單編號 #20260910-33</span>
+                                <time datetime="2026-09-10T16:50:00+08:00">2026/09/10 16:50</time>
+                            </p>
+                            <span class="order-badge order-badge--done">已完成</span>
+                        </div>
+                        <ul class="order-items">
+                            <li class="order-item">
+                                <div class="order-item__thumb" style="--tone:#D6E8DF" aria-hidden="true"></div>
+                                <div class="order-item__info">
+                                    <a class="order-item__name" href="#">手工餅乾禮盒</a>
+                                    <span class="order-item__spec">巧克力／數量 1</span>
+                                </div>
+                                <span class="order-item__price">$520</span>
+                            </li>
+                            <li class="order-item">
+                                <div class="order-item__thumb" style="--tone:#D6E8DF" aria-hidden="true"></div>
+                                <div class="order-item__info">
+                                    <a class="order-item__name" href="#">手工餅乾禮盒</a>
+                                    <span class="order-item__spec">原味／數量 1</span>
+                                </div>
+                                <span class="order-item__price">$490</span>
+                            </li>
+                        </ul>
+                        <div class="order-card__foot">
+                            <p class="order-card__total">總計 <strong>$1,010</strong></p>
+                            <div class="order-actions">
+                                <a class="order-action" href="#">再買一次</a>
+                                <a class="order-action order-action--primary" href="#">填寫評價</a>
+                            </div>
+                        </div>
+                    </li>
+                    <li class="order-card order-card--muted" data-status="cancelled">
+                        <div class="order-card__head">
+                            <p class="order-card__id">
+                                <span class="order-card__no">訂單編號 #20260930-19</span>
+                                <time datetime="2026-09-30T08:30:00+08:00">2026/09/30 08:30</time>
+                            </p>
+                            <span class="order-badge order-badge--cancelled">已取消／已退款</span>
+                        </div>
+                        <ul class="order-items">
+                            <li class="order-item">
+                                <div class="order-item__thumb" style="--tone:#DDE3E8" aria-hidden="true"></div>
+                                <div class="order-item__info">
+                                    <span class="order-item__name">無線藍牙耳機</span>
+                                    <span class="order-item__spec">黑色／數量 1</span>
+                                </div>
+                                <span class="order-item__price">$1,280</span>
+                            </li>
+                        </ul>
+                        <div class="order-card__foot">
+                            <p class="order-card__total">總計 <strong>$1,280</strong></p>
+                            <div class="order-actions">
+                                <a class="order-action" href="#">查看詳情</a>
+                            </div>
+                        </div>
+                        <p class="order-card__hint">未達成團門檻，已於 2026/10/08 自動取消並退款</p>
+                    </li>
+                </ul>
+
             </main>
         </div>
     </div>

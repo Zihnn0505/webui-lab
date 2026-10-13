@@ -45,7 +45,383 @@
             </header>
 
             <main class="content">
-                <!-- 賣家中心內容 -->
+                <div class="page-head seller-head">
+                    <div>
+                        <h1 class="page-title">賣家中心</h1>
+                        <p class="result-count">管理你的團購與訂單</p>
+                    </div>
+                    <a class="btn" href="#">＋ 建立新團購</a>
+                </div>
+
+                <ul class="seller-stats" aria-label="數據總覽">
+                    <li class="seller-stat">
+                        <p class="seller-stat__label">進行中團購</p>
+                        <p class="seller-stat__value">5</p>
+                        <p class="seller-stat__note">其中 1 團 24 小時內截止</p>
+                    </li>
+                    <li class="seller-stat seller-stat--alert">
+                        <p class="seller-stat__label">待出貨訂單</p>
+                        <p class="seller-stat__value">4</p>
+                        <p class="seller-stat__note">已成團，等你出貨</p>
+                    </li>
+                    <li class="seller-stat">
+                        <p class="seller-stat__label">本月已付款金額</p>
+                        <p class="seller-stat__value">$128,000</p>
+                        <p class="seller-stat__note">共 212 筆已付款訂單</p>
+                    </li>
+                    <li class="seller-stat">
+                        <p class="seller-stat__label">平均成團率</p>
+                        <p class="seller-stat__value">76%</p>
+                        <p class="seller-stat__note">近 30 天已結束的團購</p>
+                    </li>
+                </ul>
+
+                <section class="seller-section" aria-labelledby="groups-title">
+                    <div class="seller-section__head">
+                        <h2 id="groups-title" class="seller-section__title">我的團購</h2>
+                        <p class="seller-section__sub">共 <strong>6</strong> 團</p>
+                    </div>
+
+                    <nav aria-label="依團購狀態篩選">
+                        <ul class="chips">
+                        <li><button type="button" class="chip is-active" data-filter="all" aria-pressed="true">全部</button></li>
+                        <li><button type="button" class="chip" data-filter="open" aria-pressed="false">募集中</button></li>
+                        <li><button type="button" class="chip" data-filter="soon" aria-pressed="false">即將截止</button></li>
+                        <li><button type="button" class="chip" data-filter="done" aria-pressed="false">已成團</button></li>
+                        <li><button type="button" class="chip" data-filter="full" aria-pressed="false">已額滿</button></li>
+                        <li><button type="button" class="chip" data-filter="ended" aria-pressed="false">未成團</button></li>
+                        </ul>
+                    </nav>
+
+                    <!--
+                      這張是「真正的表格」（<table>），資料有欄有列。
+                      寬度夠時照表格顯示；容器變窄時（見 seller.css 的 @container），
+                      每一列自動變成一張直式卡片。
+                      因為 CSS 會把 table 改成 display:block，部分瀏覽器會因此丟掉表格語意，
+                      所以每個元素都補上 role，讓螢幕閱讀器仍然知道這是表格。
+                    -->
+                    <div class="seller-table-wrap">
+                        <table class="seller-table" role="table">
+                            <caption class="seller-sr">我的團購列表</caption>
+                            <thead role="rowgroup">
+                                <tr role="row">
+                                    <th role="columnheader" scope="col">商品</th>
+                                    <th role="columnheader" scope="col">成團進度</th>
+                                    <th role="columnheader" scope="col">剩餘名額</th>
+                                    <th role="columnheader" scope="col">截止時間</th>
+                                    <th role="columnheader" scope="col">狀態</th>
+                                    <th role="columnheader" scope="col"><span class="seller-sr">操作</span></th>
+                                </tr>
+                            </thead>
+                            <tbody role="rowgroup">
+                        <tr role="row" data-status="open" data-min="50" data-stock="120" data-paid="32" data-held="6">
+                            <td role="cell" class="seller-cell--lead">
+                                <div class="seller-product">
+                                    <div class="seller-thumb" style="--tone:#D6E8DF" aria-hidden="true"></div>
+                                    <div class="seller-product__text">
+                                        <a class="seller-product__name" href="#">手工餅乾禮盒</a>
+                                        <span class="seller-product__meta">$490・2 種規格</span>
+                                    </div>
+                                </div>
+                            </td>
+                            <td role="cell" data-label="成團進度">
+                                <div class="seller-cell__body">
+                                    <div class="progress" style="--value:64" role="progressbar" aria-label="成團進度" aria-valuenow="64" aria-valuemin="0" aria-valuemax="100"></div>
+                                    <span class="seller-cell__sub">已付款 32／最低 50</span>
+                                </div>
+                            </td>
+                            <td role="cell" data-label="剩餘名額">
+                                <div class="seller-cell__body">
+                                    <span class="seller-cell__main">82 件</span>
+                                    <span class="seller-cell__sub">庫存 120・預扣 6</span>
+                                </div>
+                            </td>
+                            <td role="cell" data-label="截止時間">
+                                <div class="seller-cell__body"><time datetime="2026-10-18T20:00:00+08:00">10/18 20:00</time></div>
+                            </td>
+                            <td role="cell" data-label="狀態">
+                                <div class="seller-cell__body"><span class="seller-badge seller-badge--open">募集中</span></div>
+                            </td>
+                            <td role="cell">
+                                <div class="seller-actions">
+                                    <a class="seller-action" href="#">查看訂單</a>
+                                    <a class="seller-action" href="#">編輯</a>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr role="row" data-status="soon" data-min="100" data-stock="150" data-paid="40" data-held="0">
+                            <td role="cell" class="seller-cell--lead">
+                                <div class="seller-product">
+                                    <div class="seller-thumb" style="--tone:#F3E4C9" aria-hidden="true"></div>
+                                    <div class="seller-product__text">
+                                        <a class="seller-product__name" href="#">有機水果箱</a>
+                                        <span class="seller-product__meta">$399・1 種規格</span>
+                                    </div>
+                                </div>
+                            </td>
+                            <td role="cell" data-label="成團進度">
+                                <div class="seller-cell__body">
+                                    <div class="progress" style="--value:40;--fill:var(--c-warn-fill)" role="progressbar" aria-label="成團進度" aria-valuenow="40" aria-valuemin="0" aria-valuemax="100"></div>
+                                    <span class="seller-cell__sub">已付款 40／最低 100</span>
+                                </div>
+                            </td>
+                            <td role="cell" data-label="剩餘名額">
+                                <div class="seller-cell__body">
+                                    <span class="seller-cell__main">110 件</span>
+                                    <span class="seller-cell__sub">庫存 150・預扣 0</span>
+                                </div>
+                            </td>
+                            <td role="cell" data-label="截止時間">
+                                <div class="seller-cell__body"><time datetime="2026-10-12T09:00:00+08:00">10/12 09:00</time></div>
+                            </td>
+                            <td role="cell" data-label="狀態">
+                                <div class="seller-cell__body"><span class="seller-badge seller-badge--soon">即將截止</span></div>
+                            </td>
+                            <td role="cell">
+                                <div class="seller-actions">
+                                    <a class="seller-action" href="#">查看訂單</a>
+                                    <a class="seller-action" href="#">編輯</a>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr role="row" data-status="done" data-min="60" data-stock="80" data-paid="71" data-held="0">
+                            <td role="cell" class="seller-cell--lead">
+                                <div class="seller-product">
+                                    <div class="seller-thumb" style="--tone:#E3DDF0" aria-hidden="true"></div>
+                                    <div class="seller-product__text">
+                                        <a class="seller-product__name" href="#">保溫杯組</a>
+                                        <span class="seller-product__meta">$680・2 種規格</span>
+                                    </div>
+                                </div>
+                            </td>
+                            <td role="cell" data-label="成團進度">
+                                <div class="seller-cell__body">
+                                    <div class="progress" style="--value:100" role="progressbar" aria-label="成團進度" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100"></div>
+                                    <span class="seller-cell__sub">已付款 71／最低 60</span>
+                                </div>
+                            </td>
+                            <td role="cell" data-label="剩餘名額">
+                                <div class="seller-cell__body">
+                                    <span class="seller-cell__main seller-cell__main--low">9 件</span>
+                                    <span class="seller-cell__sub">庫存 80・預扣 0</span>
+                                </div>
+                            </td>
+                            <td role="cell" data-label="截止時間">
+                                <div class="seller-cell__body"><time datetime="2026-10-15T23:59:00+08:00">10/15 23:59</time></div>
+                            </td>
+                            <td role="cell" data-label="狀態">
+                                <div class="seller-cell__body"><span class="seller-badge seller-badge--done">已成團</span></div>
+                            </td>
+                            <td role="cell">
+                                <div class="seller-actions">
+                                    <a class="seller-action" href="#">查看訂單</a>
+                                    <a class="seller-action" href="#">編輯</a>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr role="row" data-status="full" data-min="60" data-stock="90" data-paid="90" data-held="0">
+                            <td role="cell" class="seller-cell--lead">
+                                <div class="seller-product">
+                                    <div class="seller-thumb" style="--tone:#DCE6F2" aria-hidden="true"></div>
+                                    <div class="seller-product__text">
+                                        <a class="seller-product__name" href="#">手沖咖啡濾掛</a>
+                                        <span class="seller-product__meta">$320・3 種規格</span>
+                                    </div>
+                                </div>
+                            </td>
+                            <td role="cell" data-label="成團進度">
+                                <div class="seller-cell__body">
+                                    <div class="progress" style="--value:100" role="progressbar" aria-label="成團進度" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100"></div>
+                                    <span class="seller-cell__sub">已付款 90／最低 60</span>
+                                </div>
+                            </td>
+                            <td role="cell" data-label="剩餘名額">
+                                <div class="seller-cell__body">
+                                    <span class="seller-cell__main seller-cell__main--low">0 件</span>
+                                    <span class="seller-cell__sub">庫存 90・預扣 0</span>
+                                </div>
+                            </td>
+                            <td role="cell" data-label="截止時間">
+                                <div class="seller-cell__body"><time datetime="2026-10-14T20:00:00+08:00">10/14 20:00</time></div>
+                            </td>
+                            <td role="cell" data-label="狀態">
+                                <div class="seller-cell__body"><span class="seller-badge seller-badge--full">已額滿</span></div>
+                            </td>
+                            <td role="cell">
+                                <div class="seller-actions">
+                                    <a class="seller-action" href="#">查看訂單</a>
+                                    <a class="seller-action" href="#">編輯</a>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr role="row" data-status="open" data-min="30" data-stock="60" data-paid="12" data-held="2">
+                            <td role="cell" class="seller-cell--lead">
+                                <div class="seller-product">
+                                    <div class="seller-thumb" style="--tone:#E8DDD0" aria-hidden="true"></div>
+                                    <div class="seller-product__text">
+                                        <a class="seller-product__name" href="#">純棉托特包</a>
+                                        <span class="seller-product__meta">$350・2 種規格</span>
+                                    </div>
+                                </div>
+                            </td>
+                            <td role="cell" data-label="成團進度">
+                                <div class="seller-cell__body">
+                                    <div class="progress" style="--value:40" role="progressbar" aria-label="成團進度" aria-valuenow="40" aria-valuemin="0" aria-valuemax="100"></div>
+                                    <span class="seller-cell__sub">已付款 12／最低 30</span>
+                                </div>
+                            </td>
+                            <td role="cell" data-label="剩餘名額">
+                                <div class="seller-cell__body">
+                                    <span class="seller-cell__main">46 件</span>
+                                    <span class="seller-cell__sub">庫存 60・預扣 2</span>
+                                </div>
+                            </td>
+                            <td role="cell" data-label="截止時間">
+                                <div class="seller-cell__body"><time datetime="2026-10-20T18:00:00+08:00">10/20 18:00</time></div>
+                            </td>
+                            <td role="cell" data-label="狀態">
+                                <div class="seller-cell__body"><span class="seller-badge seller-badge--open">募集中</span></div>
+                            </td>
+                            <td role="cell">
+                                <div class="seller-actions">
+                                    <a class="seller-action" href="#">查看訂單</a>
+                                    <a class="seller-action" href="#">編輯</a>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr role="row" data-status="ended" data-min="40" data-stock="100" data-paid="18" data-held="0">
+                            <td role="cell" class="seller-cell--lead">
+                                <div class="seller-product">
+                                    <div class="seller-thumb" style="--tone:#DDE3E8" aria-hidden="true"></div>
+                                    <div class="seller-product__text">
+                                        <a class="seller-product__name" href="#">無線藍牙耳機</a>
+                                        <span class="seller-product__meta">$1,280・2 種規格</span>
+                                    </div>
+                                </div>
+                            </td>
+                            <td role="cell" data-label="成團進度">
+                                <div class="seller-cell__body">
+                                    <div class="progress" style="--value:45;--fill:var(--c-muted)" role="progressbar" aria-label="成團進度" aria-valuenow="45" aria-valuemin="0" aria-valuemax="100"></div>
+                                    <span class="seller-cell__sub">已付款 18／最低 40</span>
+                                </div>
+                            </td>
+                            <td role="cell" data-label="剩餘名額">
+                                <div class="seller-cell__body">
+                                    <span class="seller-cell__main">—</span>
+                                    <span class="seller-cell__sub">已結束收單</span>
+                                </div>
+                            </td>
+                            <td role="cell" data-label="截止時間">
+                                <div class="seller-cell__body"><time datetime="2026-10-08T20:00:00+08:00">10/08 20:00</time><span class="seller-cell__sub">已結束</span></div>
+                            </td>
+                            <td role="cell" data-label="狀態">
+                                <div class="seller-cell__body"><span class="seller-badge seller-badge--ended">未成團</span></div>
+                            </td>
+                            <td role="cell">
+                                <div class="seller-actions">
+                                    <a class="seller-action" href="#">查看訂單</a>
+                                </div>
+                            </td>
+                        </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <section class="seller-section" aria-labelledby="orders-title">
+                    <div class="seller-section__head">
+                        <h2 id="orders-title" class="seller-section__title">待出貨訂單</h2>
+                        <p class="seller-section__sub">共 <strong>4</strong> 筆，已成團、可以出貨</p>
+                        <a class="seller-section__link" href="#">查看全部訂單 →</a>
+                    </div>
+
+                    <div class="seller-table-wrap">
+                        <table class="seller-table" role="table">
+                            <caption class="seller-sr">待出貨訂單列表</caption>
+                            <thead role="rowgroup">
+                                <tr role="row">
+                                    <th role="columnheader" scope="col">訂單編號</th>
+                                    <th role="columnheader" scope="col">買家</th>
+                                    <th role="columnheader" scope="col">商品／規格</th>
+                                    <th role="columnheader" scope="col">數量</th>
+                                    <th role="columnheader" scope="col">金額</th>
+                                    <th role="columnheader" scope="col"><span class="seller-sr">操作</span></th>
+                                </tr>
+                            </thead>
+                            <tbody role="rowgroup">
+                        <tr role="row" data-status="preparing">
+                            <td role="cell" class="seller-cell--lead">#20260925-14</td>
+                            <td role="cell" data-label="買家"><div class="seller-cell__body">王＊明</div></td>
+                            <td role="cell" data-label="商品／規格">
+                                <div class="seller-cell__body">
+                                    <span class="seller-cell__main">保溫杯組</span>
+                                    <span class="seller-cell__sub">藍色</span>
+                                </div>
+                            </td>
+                            <td role="cell" data-label="數量"><div class="seller-cell__body">1</div></td>
+                            <td role="cell" data-label="金額"><div class="seller-cell__body">$680</div></td>
+                            <td role="cell">
+                                <div class="seller-actions">
+                                    <button type="button" class="seller-action seller-action--primary">標記出貨</button>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr role="row" data-status="preparing">
+                            <td role="cell" class="seller-cell--lead">#20260925-17</td>
+                            <td role="cell" data-label="買家"><div class="seller-cell__body">陳＊華</div></td>
+                            <td role="cell" data-label="商品／規格">
+                                <div class="seller-cell__body">
+                                    <span class="seller-cell__main">保溫杯組</span>
+                                    <span class="seller-cell__sub">白色</span>
+                                </div>
+                            </td>
+                            <td role="cell" data-label="數量"><div class="seller-cell__body">2</div></td>
+                            <td role="cell" data-label="金額"><div class="seller-cell__body">$1,360</div></td>
+                            <td role="cell">
+                                <div class="seller-actions">
+                                    <button type="button" class="seller-action seller-action--primary">標記出貨</button>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr role="row" data-status="preparing">
+                            <td role="cell" class="seller-cell--lead">#20260926-03</td>
+                            <td role="cell" data-label="買家"><div class="seller-cell__body">李＊同</div></td>
+                            <td role="cell" data-label="商品／規格">
+                                <div class="seller-cell__body">
+                                    <span class="seller-cell__main">保溫杯組</span>
+                                    <span class="seller-cell__sub">藍色</span>
+                                </div>
+                            </td>
+                            <td role="cell" data-label="數量"><div class="seller-cell__body">1</div></td>
+                            <td role="cell" data-label="金額"><div class="seller-cell__body">$680</div></td>
+                            <td role="cell">
+                                <div class="seller-actions">
+                                    <button type="button" class="seller-action seller-action--primary">標記出貨</button>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr role="row" data-status="preparing">
+                            <td role="cell" class="seller-cell--lead">#20260927-09</td>
+                            <td role="cell" data-label="買家"><div class="seller-cell__body">林＊婷</div></td>
+                            <td role="cell" data-label="商品／規格">
+                                <div class="seller-cell__body">
+                                    <span class="seller-cell__main">手沖咖啡濾掛</span>
+                                    <span class="seller-cell__sub">中烘焙</span>
+                                </div>
+                            </td>
+                            <td role="cell" data-label="數量"><div class="seller-cell__body">3</div></td>
+                            <td role="cell" data-label="金額"><div class="seller-cell__body">$960</div></td>
+                            <td role="cell">
+                                <div class="seller-actions">
+                                    <button type="button" class="seller-action seller-action--primary">標記出貨</button>
+                                </div>
+                            </td>
+                        </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
             </main>
         </div>
     </div>
@@ -55,3 +431,4 @@
 </body>
 
 </html>
+ 
