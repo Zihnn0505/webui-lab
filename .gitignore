@@ -5,10 +5,9 @@ node_modules/
 dist/
 build/
 
-# 環境變數與密鑰
-.env
-.env.local
-.env.*.local
+# 環境變數與密鑰（保留不含密鑰的範本）
+.env*
+!.env.example
 /data/users.json
 
 # 編輯器與系統
