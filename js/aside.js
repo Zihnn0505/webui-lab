@@ -1,4 +1,4 @@
-fetch("/aside.html")
+fetch("aside.html")
     .then(response => {
         if (!response.ok) {
             throw new Error("載入 aside.html 失敗");

@@ -9,6 +9,7 @@ build/
 .env
 .env.local
 .env.*.local
+/data/users.json
 
 # 編輯器與系統
 .vscode/

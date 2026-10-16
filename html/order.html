@@ -7,7 +7,8 @@
 
     <title>我的訂單</title>
 
-    <link rel="stylesheet" href="/css/style.css">
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="css/style.css">
 </head>
 
 <body>
@@ -22,7 +23,7 @@
                         <path d="M4 7h16M4 12h16M4 17h16"/>
                     </svg>
                 </button>
-                <a class="topbar__brand" href="/index.html">LOGO </a>
+                <a class="topbar__brand" href="index.html">LOGO </a>
 
                 <form class="search" role="search" action="#">
                     <input type="search" name="q" placeholder="搜尋商品" aria-label="搜尋商品">
@@ -35,14 +36,38 @@
                         </svg>
                         <span class="cart__count">2</span>
                     </a>
-                    <div class="topbar__user">
+                    <div class="topbar__user" id="auth-user" hidden>
                         <span class="avatar" aria-hidden="true">👤</span>
-                        <span class="user-name">使用者</span>
+                        <span class="user-name" id="user-name"></span>
                     </div>
-                    <a class="topbar__auth" id="login-link" href="#">登入</a>
+                    <button class="topbar__auth" id="auth-open-button" type="button">登入／註冊</button>
                     <button class="topbar__auth topbar__auth--button" id="logout-button" type="button" hidden>登出</button>
                 </div>
             </header>
+            <dialog class="auth-dialog" id="auth-dialog" aria-labelledby="auth-title">
+                <form class="auth-form" id="auth-form">
+                    <div class="auth-dialog__header">
+                        <h2 id="auth-title">登入</h2>
+                        <button class="auth-dialog__close" id="auth-close-button" type="button" aria-label="關閉">×</button>
+                    </div>
+                    <label class="auth-field" id="auth-username-field" hidden>
+                        使用者名稱
+                        <input id="auth-username" name="username" type="text" autocomplete="username" minlength="2" maxlength="30">
+                    </label>
+                    <label class="auth-field">
+                        <span id="auth-identifier-label">使用者名稱或 Mail</span>
+                        <input id="auth-identifier" name="identifier" type="text" autocomplete="username" placeholder="請輸入使用者名稱或 Mail" required maxlength="254">
+                    </label>
+                    <label class="auth-field">
+                        密碼
+                        <input id="auth-password" name="password" type="password" autocomplete="current-password" required minlength="8" maxlength="128">
+                    </label>
+                    <p class="auth-status" id="auth-status" role="status" aria-live="polite" hidden></p>
+                    <button class="topbar__auth auth-submit" id="auth-submit-button" type="submit">登入</button>
+                    <button class="auth-mode-toggle" id="auth-mode-toggle" type="button">還沒有帳號？註冊</button>
+                    <p class="auth-demo-note">註冊僅檢查 Gmail 格式，不會寄送驗證信。</p>
+                </form>
+            </dialog>
                 
             <main class="content">
 
@@ -244,7 +269,8 @@
         </div>
     </div>
 
-    <script src="/js/aside.js"></script>
+    <script src="js/aside.js"></script>
+    <script src="js/auth.js"></script>
 
 </body>
 
