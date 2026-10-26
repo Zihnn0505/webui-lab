@@ -75,7 +75,7 @@
                         <h1 class="page-title">賣家中心</h1>
                         <p class="result-count">管理你的團購與訂單</p>
                     </div>
-                    <a class="btn" href="#">＋ 建立新團購</a>
+                    <button class="btn" id="create-group-button" type="button">＋ 建立新團購</button>
                 </div>
 
                 <ul class="seller-stats" aria-label="數據總覽">
@@ -105,6 +105,7 @@
                     <div class="seller-section__head">
                         <h2 id="groups-title" class="seller-section__title">我的團購</h2>
                         <p class="seller-section__sub">共 <strong>6</strong> 團</p>
+                        <p class="seller-section__sub" id="seller-group-status" role="status" aria-live="polite" hidden></p>
                     </div>
 
                     <nav aria-label="依團購狀態篩選">
@@ -138,7 +139,7 @@
                                     <th role="columnheader" scope="col"><span class="seller-sr">操作</span></th>
                                 </tr>
                             </thead>
-                            <tbody role="rowgroup">
+                            <tbody id="seller-group-list" role="rowgroup">
                         <tr role="row" data-status="open" data-min="50" data-stock="120" data-paid="32" data-held="6">
                             <td role="cell" class="seller-cell--lead">
                                 <div class="seller-product">
@@ -453,6 +454,7 @@
 
     <script src="js/aside.js"></script>
     <script src="js/auth.js"></script>
+    <script src="js/seller.js"></script>
 
 </body>
 

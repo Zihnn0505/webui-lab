@@ -71,18 +71,22 @@
 
             <main class="content">
                 <div class="page-head">
-                    <h1 class="page-title">開團中的商品</h1>
-                    <p class="result-count" aria-live="polite">顯示 <strong class="result-range">1-20</strong> 筆，共 <span class="result-total">67</span> 筆團購</p>
+                    <div>
+                        <h1 class="page-title">瀏覽商品</h1>
+                        <p class="result-count" aria-live="polite">顯示 <strong class="result-range">1-20</strong> 筆，共 <span class="result-total">67</span> 筆團購</p>
+                        <p class="result-count" id="catalog-status" role="status" aria-live="polite" hidden></p>
+                    </div>
                 </div>
                 <div class="toolbar">
                     <nav aria-label="商品分類">
                         <ul class="chips">
-                            <li><button type="button" class="chip is-active" aria-pressed="true">全部</button></li>
-                            <li><button type="button" class="chip" aria-pressed="false">食品</button></li>
-                            <li><button type="button" class="chip" aria-pressed="false">生活用品</button></li>
-                            <li><button type="button" class="chip" aria-pressed="false">3C 配件</button></li>
-                            <li><button type="button" class="chip" aria-pressed="false">服飾</button></li>
-                            <li><button type="button" class="chip" aria-pressed="false">美妝保養</button></li>
+                            <li><button type="button" class="chip is-active" data-category="all" aria-pressed="true">全部</button></li>
+                            <li><button type="button" class="chip" data-category="food" aria-pressed="false">食品</button></li>
+                            <li><button type="button" class="chip" data-category="home" aria-pressed="false">生活用品</button></li>
+                            <li><button type="button" class="chip" data-category="electronics" aria-pressed="false">3C 配件</button></li>
+                            <li><button type="button" class="chip" data-category="fashion" aria-pressed="false">服飾</button></li>
+                            <li><button type="button" class="chip" data-category="beauty" aria-pressed="false">美妝保養</button></li>
+                            <li><button type="button" class="chip" data-category="other" aria-pressed="false">其他</button></li>
                         </ul>
                     </nav>
                     <div class="sort">

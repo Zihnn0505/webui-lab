@@ -41,6 +41,7 @@ function renderUser(user) {
     if (logoutButton) {
         logoutButton.hidden = !isSignedIn;
     }
+    document.dispatchEvent(new CustomEvent("auth:user-changed", { detail: { user } }));
 }
 
 async function readResponse(response) {
@@ -115,6 +116,10 @@ authModeToggle?.addEventListener("click", () => setAuthMode(!isRegisterMode));
 authForm?.addEventListener("submit", submitCredentials);
 
 logoutButton?.addEventListener("click", async () => {
+    if (!window.confirm("確定要登出嗎？")) {
+        return;
+    }
+
     logoutButton.disabled = true;
     try {
         const response = await fetch("api/auth/logout", { method: "POST" });

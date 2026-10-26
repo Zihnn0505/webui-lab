@@ -528,13 +528,17 @@ ul { margin: 0; padding: 0; list-style: none; }
 .btn {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   min-height: 44px;
   padding: 0 22px;
+  border: 0;
   border-radius: 10px;
+  font: inherit;
   font-weight: 600;
   text-decoration: none;
   color: var(--c-on-brand);
   background: var(--c-brand);
+  cursor: pointer;
 }
 .btn:hover { filter: brightness(1.08); }
 
@@ -619,6 +623,7 @@ ul { margin: 0; padding: 0; list-style: none; }
 .pill--open { color: var(--c-brand-text); background: var(--c-surface); }
 .pill--done { color: var(--c-ok-text);    background: var(--c-ok-bg); }
 .pill--soon { color: var(--c-warn-text);  background: var(--c-warn-bg); }
+.pill--ended { color: var(--c-muted); background: var(--c-line); }
 
 .card__body {
   flex: 1;
@@ -762,7 +767,7 @@ ul { margin: 0; padding: 0; list-style: none; }
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 1000;
+    z-index: 1200;
 }
 
 .setting-modal[hidden] {
@@ -791,6 +796,128 @@ ul { margin: 0; padding: 0; list-style: none; }
     border: 1px solid var(--c-line);
     border-radius: 12px;
     z-index: 1;
+}
+
+.setting-modal__content--wide {
+    width: min(94vw, 760px);
+    max-height: calc(100dvh - 32px);
+    overflow-y: auto;
+}
+
+.group-form {
+    display: grid;
+    gap: 16px;
+    margin-top: 16px;
+}
+
+.group-form__grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+}
+
+.group-form__field {
+    display: grid;
+    gap: 6px;
+    min-width: 0;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.group-form__field--full {
+    grid-column: 1 / -1;
+}
+
+.group-form :is(input, select, textarea) {
+    width: 100%;
+    min-height: 42px;
+    padding: 8px 10px;
+    border: 1px solid var(--c-line);
+    border-radius: 8px;
+    color: var(--c-ink);
+    background: var(--c-surface);
+    font: inherit;
+    font-weight: 400;
+}
+
+.group-form textarea {
+    min-height: 76px;
+    resize: vertical;
+}
+
+.group-form__hint {
+    margin: 0;
+    color: var(--c-muted);
+    font-size: 0.8rem;
+    font-weight: 400;
+}
+
+.group-form__required {
+    color: #c62828;
+}
+
+.group-form__variants {
+    display: grid;
+    gap: 10px;
+    margin: 0;
+    padding: 14px;
+    border: 1px solid var(--c-line);
+    border-radius: 10px;
+}
+
+.group-form__variants legend {
+    padding: 0 6px;
+    font-weight: 700;
+}
+
+.group-form__variant {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(110px, 0.45fr) auto;
+    align-items: end;
+    gap: 10px;
+}
+
+.group-form__variant .group-form__field {
+    font-weight: 400;
+}
+
+.group-form__button {
+    min-height: 38px;
+    padding: 6px 12px;
+    border: 1px solid var(--c-line);
+    border-radius: 8px;
+    color: var(--c-ink);
+    background: var(--c-surface);
+    font: inherit;
+    cursor: pointer;
+}
+
+.group-form__button:hover {
+    background: var(--c-tint);
+}
+
+.group-form__message {
+    margin: 0;
+    color: #a52a2a;
+    font-size: 0.875rem;
+}
+
+.group-form__actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.group-form__actions button:disabled {
+    cursor: wait;
+    opacity: 0.65;
+}
+
+.group-form__image-list {
+    margin: 0;
+    color: var(--c-muted);
+    font-size: 0.8rem;
+    overflow-wrap: anywhere;
 }
 
 
@@ -1097,6 +1224,14 @@ ul { margin: 0; padding: 0; list-style: none; }
   background: var(--tone, var(--c-tint));  
 }
 
+.seller-thumb img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  object-fit: cover;
+}
+
 .seller-product__text {
   display: flex;
   flex-direction: column;
@@ -1182,6 +1317,13 @@ ul { margin: 0; padding: 0; list-style: none; }
   border-color: var(--c-brand);
 }
 .seller-action--primary:hover { background: var(--c-brand); filter: brightness(1.08); }
+
+@media (max-width: 560px) {
+  .setting-modal__content--wide { padding: 20px 16px; }
+  .group-form__grid { grid-template-columns: 1fr; }
+  .group-form__field--full { grid-column: auto; }
+  .group-form__variant { grid-template-columns: minmax(0, 1fr) minmax(90px, 0.7fr) auto; }
+}
 
 @container seller-table (max-width: 720px) {
 

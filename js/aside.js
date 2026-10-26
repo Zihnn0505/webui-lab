@@ -7,9 +7,11 @@ fetch("aside.html")
     })
     .then(html => {
         document.querySelector("#aside-container").innerHTML = html;
+        document.body.append(document.querySelector("#setting-modal"));
         setActiveMenu();
         setupSettingModal();
         setupSidebarToggle();
+        document.dispatchEvent(new Event("aside:ready"));
     })
     .catch(error => {
         console.error(error);
@@ -58,13 +60,24 @@ function setupSettingModal() {
                 modalBody.innerHTML = "<p>這裡是帳號安全設定。</p>";
             }
             modal.hidden = false;
+            closeButton.focus();
         });
     });
-    closeButton.addEventListener("click", () => {
+    function closeModal() {
         modal.hidden = true;
+        modal.querySelector(".setting-modal__content").classList.remove("setting-modal__content--wide");
+    }
+
+    closeButton.addEventListener("click", () => {
+        closeModal();
     });
     overlay.addEventListener("click", () => {
-        modal.hidden = true;
+        closeModal();
+    });
+    document.addEventListener("keydown", event => {
+        if (event.key === "Escape" && !modal.hidden) {
+            closeModal();
+        }
     });
 }
 

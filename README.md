@@ -2,7 +2,7 @@
 
 Web Programming 課程實作專案，使用 Express 提供網站與登入 API。
 
-## 本機執行（網站使用 7777）
+## 本機執行（網站與 API 使用 7777）
 
 1. 安裝 Node.js 20 或更新版本。
 2. 如尚未設定環境變數，複製範本並產生 Session 密鑰：
@@ -12,23 +12,14 @@ Web Programming 課程實作專案，使用 Express 提供網站與登入 API。
    node --input-type=module -e "import { randomBytes } from 'node:crypto'; console.log(randomBytes(32).toString('hex'))"
    ```
 
-   將密鑰填入 `.env` 的 `SESSION_SECRET`。若 `.env` 已存在，請保留其中的 `SESSION_SECRET`。
-3. 開啟第一個終端機，在專案目錄啟動 Node.js 登入 API（預設埠號 3000）：
+   將密鑰填入 `.env` 的 `SESSION_SECRET`。若 `.env` 已存在，請保留其中的 `SESSION_SECRET`，並確認 `PORT=7777`。
+3. 在專案目錄啟動 Node.js 網站與 API：
 
    ```powershell
-   npm install
    npm run dev
    ```
 
-4. 保持第一個終端機運作，再從 VS Code 啟動原有的 Uvicorn 網站伺服器，埠號使用 `7777`。例如在第二個終端機執行：
-
-   ```powershell
-   python -m uvicorn server:app --reload --host 127.0.0.1 --port 7777
-   ```
-
-   FastAPI 會把 `/api/auth/...` 轉送給 Node.js API，並將 Session Cookie 傳回瀏覽器。Node.js API 預設使用 `http://127.0.0.1:3000`；如需調整，設定 `NODE_API_URL`。
-
-開啟 `http://localhost:7777`。頁面資源與登入 API 使用相對路徑，也可部署在 `/s115321014/` 這類子路徑。**兩個伺服器都必須保持執行**：若 Node.js 沒有啟動，網站會回傳 502 並顯示登入服務無法連線。正式啟動 Node.js API 可使用 `npm start`。
+開啟 `http://localhost:7777`。Express 會在同一個埠號提供網站、登入 API、團購 API 與圖片；本機開發不需要另外啟動 Uvicorn。若 7777 已被舊的 Uvicorn 或其他程式占用，請先在啟動該程式的終端機按 `Ctrl+C`，再執行 `npm run dev`。正式啟動可使用 `npm start`。
 
 ## 註冊與登入
 
@@ -40,5 +31,14 @@ Web Programming 課程實作專案，使用 Express 提供網站與登入 API。
 - 新帳號預設為 `buyer`，賣家狀態為 `none`。角色不接受註冊表單輸入。
 - 登入 Session 使用 HttpOnly、SameSite=Lax Cookie；登出會註銷 Session。
 - Demo 使用 Express 預設的記憶體 Session 儲存，重啟伺服器後使用者需要重新登入，但帳號仍保留在 JSON 檔。
+
+## 建立團購
+
+- 登入後到賣家中心按「建立新團購」，填寫商品名稱、分類、圖片、規格庫存、單價、成團最低數量與截止時間；也可設定出貨日期、限購數量及配送資訊。
+- 圖片可上傳 JPG、PNG 或 WebP（每張最多 5 MB、最多 5 張），或填入 HTTP／HTTPS 圖片連結。
+- 前端與 Node.js API 都會驗證規格名稱不得重複、成團數量不可超過庫存、截止時間須晚於現在，以及價格、庫存與圖片限制。
+- 團購編號、賣家 ID、建立時間、已付款量、預扣量、剩餘名額與狀態由伺服器管理；團購資料保存於 `data/group-buys.json`，上傳圖片保存於 `data/group-buy-images/`。
+- 團購發布後可從賣家列表編輯；截止時間不可提前。已有付款或預扣訂單時，API 會鎖定商品條件與既有規格，只允許修改描述、圖片、預計出貨日期、延後截止時間，以及增加規格庫存。
+- 團購建立與賣家清單 API 需要登入 Session；開團商品與已發布圖片可由瀏覽商品頁公開讀取。網站和 API 都由 Express 在 `7777` 提供。
 
 JSON 與未驗證的 Email 註冊只適合單機展示，不適合正式上線。正式服務需要驗證 Email，並改用資料庫、持久化 Session 與 HTTPS。

@@ -12,7 +12,7 @@ app = FastAPI()
 node_api_url = os.getenv("NODE_API_URL", "http://127.0.0.1:3000").rstrip("/")
 
 
-def forward_auth_request(method, url, body, headers):
+def forward_node_api_request(method, url, body, headers):
     upstream_request = UpstreamRequest(url, data=body, headers=headers, method=method)
 
     try:
@@ -22,10 +22,7 @@ def forward_auth_request(method, url, body, headers):
         return error.code, error.headers, error.read()
 
 
-@app.api_route("/api/auth/{path:path}", methods=["GET", "POST"])
-async def proxy_auth_request(path: str, request: Request):
-    query = f"?{request.url.query}" if request.url.query else ""
-    upstream_url = f"{node_api_url}/api/auth/{path}{query}"
+async def proxy_node_api_request(request: Request, upstream_url: str, api_name: str, unavailable_message: str):
     forwarded_headers = {
         name: request.headers[name]
         for name in ("accept", "content-type", "cookie")
@@ -34,16 +31,16 @@ async def proxy_auth_request(path: str, request: Request):
 
     try:
         status, upstream_headers, body = await asyncio.to_thread(
-            forward_auth_request,
+            forward_node_api_request,
             request.method,
             upstream_url,
             await request.body(),
             forwarded_headers,
         )
     except URLError as error:
-        print(f"Node.js auth API is unavailable at {node_api_url}: {error}")
+        print(f"Node.js {api_name} API is unavailable at {node_api_url}: {error}")
         return Response(
-            content=json.dumps({"error": "登入服務暫時無法連線，請確認 Node.js API 伺服器正在執行。"}),
+            content=json.dumps({"error": unavailable_message}),
             status_code=502,
             media_type="application/json",
         )
@@ -54,6 +51,32 @@ async def proxy_auth_request(path: str, request: Request):
         if name in upstream_headers
     }
     return Response(content=body, status_code=status, headers=response_headers)
+
+
+@app.api_route("/api/auth/{path:path}", methods=["GET", "POST"])
+async def proxy_auth_request(path: str, request: Request):
+    query = f"?{request.url.query}" if request.url.query else ""
+    upstream_url = f"{node_api_url}/api/auth/{path}{query}"
+    return await proxy_node_api_request(
+        request,
+        upstream_url,
+        "auth",
+        "登入服務暫時無法連線，請確認 Node.js API 伺服器正在執行。",
+    )
+
+
+@app.api_route("/api/group-buys", methods=["GET", "POST", "PUT"])
+@app.api_route("/api/group-buys/{path:path}", methods=["GET", "POST", "PUT"])
+async def proxy_group_buy_request(request: Request, path: str = ""):
+    query = f"?{request.url.query}" if request.url.query else ""
+    group_buy_path = f"/{path}" if path else ""
+    upstream_url = f"{node_api_url}/api/group-buys{group_buy_path}{query}"
+    return await proxy_node_api_request(
+        request,
+        upstream_url,
+        "group-buy",
+        "團購服務暫時無法連線，請確認 Node.js API 伺服器正在執行。",
+    )
 
 app.mount("/css", StaticFiles(directory="css"), name="css")
 app.mount("/js", StaticFiles(directory="js"), name="js")
