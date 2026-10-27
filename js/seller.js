@@ -3,6 +3,7 @@ const groupList = document.querySelector("#seller-group-list");
 const groupCount = document.querySelector("#groups-title")?.parentElement.querySelector(".seller-section__sub strong");
 const groupStatus = document.querySelector("#seller-group-status");
 const groupFilterButtons = document.querySelectorAll(".seller-section [data-filter]");
+let sellerGroupBuys = [];
 const statusLabels = {
     open: ["募集中", "seller-badge--open"],
     soon: ["即將截止", "seller-badge--soon"],
@@ -125,7 +126,7 @@ function renderGroupBuy(groupBuy) {
     const stateCell = createCell("狀態");
     const stateBody = document.createElement("div");
     stateBody.className = "seller-cell__body";
-    const [stateLabel, stateClass] = statusLabels[groupBuy.status] ?? statusLabels.open;
+    const [stateLabel, stateClass] = statusLabels[groupBuy.status] ?? ["狀態未知", "seller-badge--ended"];
     const state = document.createElement("span");
     state.className = `seller-badge ${stateClass}`;
     state.textContent = stateLabel;
@@ -161,10 +162,17 @@ function updateGroupBuyList(groupBuy, announce = true) {
     if (!groupList) {
         return;
     }
+    const existingIndex = sellerGroupBuys.findIndex(item => item.id === groupBuy.id);
+    if (existingIndex < 0) {
+        sellerGroupBuys.unshift(groupBuy);
+    } else {
+        sellerGroupBuys[existingIndex] = groupBuy;
+    }
     const existingRow = Array.from(groupList.querySelectorAll("tr[data-group-buy-id]"))
         .find(row => row.dataset.groupBuyId === groupBuy.id);
     if (existingRow) {
         existingRow.replaceWith(renderGroupBuy(groupBuy));
+        updateSellerStats(sellerGroupBuys);
         if (announce) {
             showGroupStatus(`已更新團購 ${groupBuy.groupNumber}。`);
         }
@@ -173,6 +181,7 @@ function updateGroupBuyList(groupBuy, announce = true) {
     }
     groupList.prepend(renderGroupBuy(groupBuy));
     updateGroupCount();
+    updateSellerStats(sellerGroupBuys);
     updateGroupFilters();
     if (announce) {
         showGroupStatus(`已建立團購 ${groupBuy.groupNumber}。`);
@@ -183,9 +192,31 @@ function updateGroupCount() {
     if (!groupCount || !groupList) {
         return;
     }
-    const staticCount = groupList.querySelectorAll("tr:not([data-group-buy-id])").length;
-    const createdCount = groupList.querySelectorAll("tr[data-group-buy-id]").length;
-    groupCount.textContent = String(staticCount + createdCount);
+    groupCount.textContent = String(groupList.querySelectorAll("tr[data-group-buy-id]").length);
+}
+
+function updateSellerStats(groupBuys) {
+    const ongoing = groupBuys.filter(groupBuy => ["open", "soon"].includes(groupBuy.status));
+    const paidQuantity = groupBuys.reduce((total, groupBuy) => total + Number(groupBuy.paidQuantity || 0), 0);
+    const finished = groupBuys.filter(groupBuy => ["done", "full", "ended"].includes(groupBuy.status));
+    const successful = finished.filter(groupBuy => ["done", "full"].includes(groupBuy.status));
+    const successRate = finished.length ? Math.round(successful.length / finished.length * 100) : 0;
+
+    document.querySelector('[data-seller-stat="ongoing"]').textContent = String(ongoing.length);
+    document.querySelector('[data-seller-stat-note="ongoing"]').textContent =
+        `其中 ${ongoing.filter(groupBuy => groupBuy.status === "soon").length} 團 24 小時內截止`;
+    document.querySelector('[data-seller-stat="paid"]').textContent = paidQuantity.toLocaleString("zh-TW");
+    document.querySelector('[data-seller-stat="success-rate"]').textContent = `${successRate}%`;
+}
+
+function renderEmptyGroupRow() {
+    const row = document.createElement("tr");
+    row.setAttribute("role", "row");
+    const cell = createCell("");
+    cell.colSpan = 6;
+    cell.textContent = "目前尚無團購資料。";
+    row.append(cell);
+    return row;
 }
 
 function formatLocalDateTime(date) {
@@ -517,14 +548,11 @@ async function loadGroupBuys() {
     try {
         const result = await readGroupBuyResponse(await fetch("api/group-buys/mine", { cache: "no-store" }));
         const groupBuys = Array.isArray(result.groupBuys) ? result.groupBuys : [];
-        const groupBuyIds = new Set(groupBuys.map(groupBuy => groupBuy.id));
-        groupList?.querySelectorAll("tr[data-group-buy-id]").forEach(row => {
-            if (!groupBuyIds.has(row.dataset.groupBuyId)) {
-                row.remove();
-            }
-        });
-        groupBuys.forEach(groupBuy => updateGroupBuyList(groupBuy, false));
+        sellerGroupBuys = groupBuys;
+        groupList?.replaceChildren(...(groupBuys.length ? groupBuys.map(renderGroupBuy) : [renderEmptyGroupRow()]));
         updateGroupCount();
+        updateSellerStats(groupBuys);
+        updateGroupFilters();
     } catch (error) {
         showGroupStatus(error.message, true);
     }
@@ -554,8 +582,10 @@ function initializeSellerPage() {
 document.addEventListener("aside:ready", initializeSellerPage);
 document.addEventListener("auth:user-changed", event => {
     if (createGroupButton && !event.detail.user) {
-        groupList?.querySelectorAll("tr[data-group-buy-id]").forEach(row => row.remove());
+        sellerGroupBuys = [];
+        groupList?.replaceChildren();
         updateGroupCount();
+        updateSellerStats(sellerGroupBuys);
         return;
     }
     if (createGroupButton && event.detail.user) {

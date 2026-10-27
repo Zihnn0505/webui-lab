@@ -31,6 +31,7 @@ Web Programming 課程實作專案，使用 Express 提供網站與登入 API。
 - 密碼使用 Node.js `scrypt` 雜湊後保存，不會以明文寫入 JSON。
 - 首次讀取時會建立 `data/users.json`，使用者資料儲存在網站靜態目錄之外。
 - 新帳號預設為 `buyer`，賣家狀態為 `none`。角色不接受註冊表單輸入。
+- 賣家中心只開放 `config.json` 的 `sellerAccess.allowedEmails` 名單。請填入已註冊帳號的 Gmail；修改後重新啟動伺服器。側邊欄會隱藏未授權入口，伺服器也會拒絕未授權的賣家頁面與團購管理 API 請求。
 - 登入 Session 使用 HttpOnly、SameSite=Lax Cookie；登出會註銷 Session。
 - Demo 使用 Express 預設的記憶體 Session 儲存，重啟伺服器後使用者需要重新登入，但帳號仍保留在 JSON 檔。
 

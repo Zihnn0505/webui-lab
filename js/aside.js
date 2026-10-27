@@ -1,3 +1,5 @@
+let authenticatedUser = null;
+
 fetch("aside.html")
     .then(response => {
         if (!response.ok) {
@@ -8,7 +10,9 @@ fetch("aside.html")
     .then(html => {
         document.querySelector("#aside-container").innerHTML = html;
         document.body.append(document.querySelector("#setting-modal"));
+        updateSellerMenu();
         setActiveMenu();
+        setupSidebarCounts();
         setupSettingModal();
         setupSidebarToggle();
         document.dispatchEvent(new Event("aside:ready"));
@@ -16,6 +20,18 @@ fetch("aside.html")
     .catch(error => {
         console.error(error);
     });
+
+function updateSellerMenu() {
+    const sellerMenu = document.querySelector("#seller__menu");
+    if (sellerMenu) {
+        sellerMenu.hidden = !authenticatedUser?.isSeller;
+    }
+}
+
+document.addEventListener("auth:user-changed", event => {
+    authenticatedUser = event.detail.user;
+    updateSellerMenu();
+});
 
 // 自動設定目前頁面的選中狀態
 function setActiveMenu() {
@@ -34,6 +50,81 @@ function setActiveMenu() {
         }
     });
 }
+
+function setupSidebarCounts() {
+    const countConfigs = [
+        {
+            type: "products",
+            page: "commodity.html",
+            listSelector: ".cards",
+            itemSelector: ".card",
+            fallbackSelector: ".result-total",
+            apiCountEndpoint: "api/group-buys"
+        },
+        {
+            type: "orders",
+            page: "order.html",
+            listSelector: ".order-list",
+            itemSelector: ".order-card"
+        }
+    ];
+
+    countConfigs.forEach(config => {
+        const badge = document.querySelector(`[data-count-for="${config.type}"]`);
+        if (!badge) {
+            return;
+        }
+
+        const currentPage = location.pathname.split("/").pop();
+        const list = currentPage === config.page
+            ? document.querySelector(config.listSelector)
+            : null;
+        if (list) {
+            const updateCount = () => {
+                badge.textContent = String(list.querySelectorAll(config.itemSelector).length);
+            };
+            updateCount();
+            new MutationObserver(updateCount).observe(list, { childList: true, subtree: true });
+            return;
+        }
+
+        fetch(config.page)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`載入 ${config.page} 失敗（${response.status}）。`);
+                }
+                return response.text();
+            })
+            .then(async pageHtml => {
+                const page = new DOMParser().parseFromString(pageHtml, "text/html");
+                const countElement = config.fallbackSelector
+                    ? page.querySelector(config.fallbackSelector)
+                    : null;
+                let count = countElement
+                    ? Number(countElement.textContent)
+                    : page.querySelectorAll(`${config.listSelector} ${config.itemSelector}`).length;
+                if (!Number.isInteger(count) || count < 0) {
+                    throw new Error(`無法取得 ${config.page} 的項目數量。`);
+                }
+
+                if (config.apiCountEndpoint) {
+                    const response = await fetch(config.apiCountEndpoint, { cache: "no-store" });
+                    const result = await response.json().catch(() => ({}));
+                    if (!response.ok) {
+                        throw new Error(result.error || `商品列表載入失敗（${response.status}）。`);
+                    }
+                    if (!Array.isArray(result.groupBuys)) {
+                        throw new Error("商品列表回應格式錯誤。");
+                    }
+                    count += result.groupBuys.length;
+                }
+
+                badge.textContent = String(count);
+            })
+            .catch(error => console.error(error));
+    });
+}
+
 // 設定小視窗
 function setupSettingModal() {
 

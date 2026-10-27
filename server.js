@@ -12,6 +12,7 @@ const projectDirectory = path.dirname(fileURLToPath(import.meta.url));
 const dataDirectory = path.join(projectDirectory, "data");
 const usersFile = path.join(dataDirectory, "users.json");
 const groupBuysFile = path.join(dataDirectory, "group-buys.json");
+const configFile = path.join(projectDirectory, "config.json");
 const groupBuyImagesDirectory = path.join(dataDirectory, "group-buy-images");
 const sessionSecret = process.env.SESSION_SECRET ?? "";
 const sessionCookieSecure = process.env.NODE_ENV === "production";
@@ -32,6 +33,7 @@ let userWriteQueue = Promise.resolve();
 let groupBuyWriteQueue = Promise.resolve();
 const dummyPasswordSalt = randomBytes(16).toString("hex");
 const dummyPasswordHash = await scrypt("not-a-real-password", dummyPasswordSalt, passwordLength);
+let sellerAccessEmails;
 
 app.disable("x-powered-by");
 app.use(express.json({ limit: "12kb" }));
@@ -50,7 +52,7 @@ app.use(session({
 
 function publicUser(user) {
     const { id, email, name, role, sellerStatus } = user;
-    return { id, email, name, role, sellerStatus };
+    return { id, email, name, role, sellerStatus, isSeller: isSellerAllowed(user) };
 }
 
 function normalizeGmail(value) {
@@ -71,6 +73,28 @@ function normalizeGmail(value) {
 
     return { email, emailKey: `${canonicalLocalPart}@gmail.com` };
 }
+
+async function loadSellerAccessConfig() {
+    const config = JSON.parse(await fs.readFile(configFile, "utf8"));
+    if (!config || typeof config !== "object" || !Array.isArray(config.sellerAccess?.allowedEmails)) {
+        throw new Error("config.json must define sellerAccess.allowedEmails as an array.");
+    }
+
+    return new Set(config.sellerAccess.allowedEmails.map(email => {
+        const normalized = normalizeGmail(email);
+        if (!normalized) {
+            throw new Error(`Invalid seller access email in config.json: ${email}`);
+        }
+        return normalized.emailKey;
+    }));
+}
+
+function isSellerAllowed(user) {
+    const normalized = normalizeGmail(user.email);
+    return Boolean(normalized && sellerAccessEmails.has(normalized.emailKey));
+}
+
+sellerAccessEmails = await loadSellerAccessConfig();
 
 function normalizeUsername(value) {
     if (typeof value !== "string") {
@@ -436,6 +460,19 @@ async function getRequestUser(req) {
     return findUserById(req.session.userId);
 }
 
+async function requireSellerAccess(req, res, next) {
+    const user = await getRequestUser(req);
+    if (!user) {
+        return res.status(401).json({ error: "請先登入再管理賣家中心。" });
+    }
+    if (!isSellerAllowed(user)) {
+        return res.status(403).json({ error: "此帳號沒有賣家中心權限。" });
+    }
+
+    req.sellerUser = user;
+    return next();
+}
+
 function findUserById(id) {
     return readUsers().then(users => users.find(user => user.id === id) ?? null);
 }
@@ -692,6 +729,14 @@ app.post("/api/auth/logout", async (req, res) => {
     return res.status(204).end();
 });
 
+app.get("/seller.html", async (req, res) => {
+    const user = await getRequestUser(req);
+    if (!user || !isSellerAllowed(user)) {
+        return res.redirect("/index.html");
+    }
+    return res.sendFile(path.join(projectDirectory, "html", "seller.html"));
+});
+
 app.get("/api/group-buys", async (_req, res) => {
     res.set("Cache-Control", "no-store");
     const groupBuys = await readGroupBuys();
@@ -701,27 +746,18 @@ app.get("/api/group-buys", async (_req, res) => {
     });
 });
 
-app.get("/api/group-buys/mine", async (req, res) => {
-    const user = await getRequestUser(req);
-    if (!user) {
-        return res.status(401).json({ error: "請先登入再管理團購。" });
-    }
-
+app.get("/api/group-buys/mine", requireSellerAccess, async (req, res) => {
     res.set("Cache-Control", "no-store");
     const groupBuys = await readGroupBuys();
     return res.json({
         groupBuys: groupBuys
-            .filter(groupBuy => groupBuy.sellerId === user.id)
+            .filter(groupBuy => groupBuy.sellerId === req.sellerUser.id)
             .map(groupBuyWithComputedFields)
     });
 });
 
-app.post("/api/group-buys", async (req, res) => {
-    const user = await getRequestUser(req);
-    if (!user) {
-        return res.status(401).json({ error: "請先登入再建立團購。" });
-    }
-
+app.post("/api/group-buys", requireSellerAccess, async (req, res) => {
+    const user = req.sellerUser;
     const details = await validateGroupBuy(req.body, user);
     const createdAt = new Date().toISOString();
     const groupBuy = {
@@ -740,12 +776,8 @@ app.post("/api/group-buys", async (req, res) => {
     return res.status(201).json({ groupBuy: groupBuyWithComputedFields(savedGroupBuy) });
 });
 
-app.put("/api/group-buys/:groupId", async (req, res) => {
-    const user = await getRequestUser(req);
-    if (!user) {
-        return res.status(401).json({ error: "請先登入再編輯團購。" });
-    }
-
+app.put("/api/group-buys/:groupId", requireSellerAccess, async (req, res) => {
+    const user = req.sellerUser;
     const groupBuys = await readGroupBuys();
     const existingGroupBuy = groupBuys.find(groupBuy => groupBuy.id === req.params.groupId && groupBuy.sellerId === user.id);
     if (!existingGroupBuy) {
@@ -804,12 +836,10 @@ app.put("/api/group-buys/:groupId", async (req, res) => {
 
 app.post(
     "/api/group-buys/images",
+    requireSellerAccess,
     express.raw({ type: ["image/jpeg", "image/png", "image/webp"], limit: "5mb" }),
     async (req, res) => {
-        const user = await getRequestUser(req);
-        if (!user) {
-            return res.status(401).json({ error: "請先登入再上傳商品圖片。" });
-        }
+        const user = req.sellerUser;
         if (!Buffer.isBuffer(req.body) || req.body.length === 0) {
             return res.status(400).json({ error: "請選擇要上傳的圖片。" });
         }

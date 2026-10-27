@@ -112,6 +112,7 @@ async function loadCurrentUser() {
         }
     } catch (error) {
         showAuthMessage(error.message);
+        document.dispatchEvent(new CustomEvent("auth:load-failed", { detail: { error: error.message } }));
     }
 }
 
