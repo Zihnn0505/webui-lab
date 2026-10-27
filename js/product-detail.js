@@ -65,8 +65,6 @@ const buyButton = detailDialog.querySelector(".product-detail__buy");
 const cartItems = cartDialog.querySelector(".cart-items");
 const cartEmpty = cartDialog.querySelector(".cart-empty");
 const cartTotal = cartDialog.querySelector(".cart-total");
-const cartCount = document.querySelector(".cart__count");
-const cartLink = document.querySelector(".cart");
 const productAuthDialog = document.querySelector("#auth-dialog");
 const productAuthOpenButton = document.querySelector("#auth-open-button");
 let activeProduct;
@@ -95,33 +93,6 @@ function readCart() {
         throw new Error("購物車資料格式錯誤，請清除瀏覽器的購物車資料後再試。");
     }
     return cart;
-}
-
-function renderCartCount() {
-    if (!currentUser) {
-        if (cartCount) {
-            cartCount.textContent = "0";
-            cartCount.hidden = true;
-        }
-        cartLink?.setAttribute("aria-label", "購物車，請先登入");
-        return;
-    }
-
-    try {
-        const quantity = readCart().reduce((total, item) => total + Number(item.quantity || 0), 0);
-        if (cartCount) {
-            cartCount.textContent = String(quantity);
-            cartCount.hidden = quantity === 0;
-        }
-        cartLink?.setAttribute("aria-label", `購物車，${quantity} 件商品`);
-    } catch (error) {
-        if (cartCount) {
-            cartCount.textContent = "!";
-            cartCount.hidden = false;
-        }
-        cartLink?.setAttribute("aria-label", "購物車資料讀取失敗");
-        console.error(error);
-    }
 }
 
 function renderCart() {
@@ -397,7 +368,7 @@ function addActiveProductToCart(openCartAfterAdd = false) {
             });
         }
         localStorage.setItem(`webui-cart-items:${currentUser.id}`, JSON.stringify(cart));
-        renderCartCount();
+        document.dispatchEvent(new Event("cart:updated"));
         showProductMessage(openCartAfterAdd
             ? "商品已加入購物車，以下為本次立即購買項目。"
             : "已加入購物車。");
@@ -428,7 +399,6 @@ document.addEventListener("click", event => {
 document.addEventListener("auth:user-changed", event => {
     currentUser = event.detail.user;
     authStateReady = true;
-    renderCartCount();
 
     if (!pendingAction) {
         return;
