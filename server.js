@@ -1,6 +1,6 @@
 import "dotenv/config";
 
-import { randomBytes, randomUUID, scrypt as nodeScrypt, timingSafeEqual } from "node:crypto";
+import { createHash, randomBytes, randomUUID, scrypt as nodeScrypt, timingSafeEqual } from "node:crypto";
 import { promises as fs } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -83,6 +83,22 @@ function normalizeUsername(value) {
     }
 
     return { username, usernameKey: username.toLowerCase() };
+}
+
+function googleUsername(users, email) {
+    let base = email.split("@", 1)[0].replace(/[^\p{L}\p{N}_.-]/gu, "_").slice(0, 30) || "google";
+    if (base.length < 2) {
+        base = `${base}_`;
+    }
+
+    for (let suffix = 1; ; suffix += 1) {
+        const suffixText = suffix === 1 ? "" : `-${suffix}`;
+        const username = `${base.slice(0, 30 - suffixText.length)}${suffixText}`;
+        const normalized = normalizeUsername(username);
+        if (!users.some(user => (user.usernameKey ?? user.name?.trim().toLowerCase()) === normalized.usernameKey)) {
+            return normalized;
+        }
+    }
 }
 
 function validatePassword(value) {
@@ -478,6 +494,121 @@ app.get("/api/auth/me", async (req, res) => {
     }
 
     return res.json({ user: publicUser(user) });
+});
+
+app.get("/api/auth/google", async (req, res) => {
+    const clientId = process.env.GOOGLE_CLIENT_ID;
+    const redirectUri = process.env.GOOGLE_REDIRECT_URI;
+    if (!clientId || !process.env.GOOGLE_CLIENT_SECRET || !redirectUri) {
+        return res.redirect("/?authError=google");
+    }
+
+    const state = randomBytes(32).toString("base64url");
+    const verifier = randomBytes(32).toString("base64url");
+    const challenge = createHash("sha256").update(verifier).digest("base64url");
+    req.session.googleOAuth = { state, verifier };
+    await saveSession(req);
+
+    const authorizationUrl = new URL("https://accounts.google.com/o/oauth2/v2/auth");
+    authorizationUrl.search = new URLSearchParams({
+        client_id: clientId,
+        redirect_uri: redirectUri,
+        response_type: "code",
+        scope: "openid email profile",
+        state,
+        code_challenge: challenge,
+        code_challenge_method: "S256"
+    }).toString();
+    return res.redirect(authorizationUrl.toString());
+});
+
+app.get("/api/auth/google/callback", async (req, res) => {
+    const pendingAuth = req.session.googleOAuth;
+    delete req.session.googleOAuth;
+    if (!pendingAuth || typeof req.query.state !== "string" || req.query.state !== pendingAuth.state) {
+        await saveSession(req);
+        return res.redirect("/?authError=google");
+    }
+    if (typeof req.query.error === "string" || typeof req.query.code !== "string") {
+        await saveSession(req);
+        return res.redirect("/?authError=google");
+    }
+    await saveSession(req);
+
+    try {
+        const tokenResponse = await fetch("https://oauth2.googleapis.com/token", {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: new URLSearchParams({
+                code: req.query.code,
+                client_id: process.env.GOOGLE_CLIENT_ID ?? "",
+                client_secret: process.env.GOOGLE_CLIENT_SECRET ?? "",
+                redirect_uri: process.env.GOOGLE_REDIRECT_URI ?? "",
+                grant_type: "authorization_code",
+                code_verifier: pendingAuth.verifier
+            }),
+            signal: AbortSignal.timeout(10000)
+        });
+        if (!tokenResponse.ok) {
+            throw new Error(`Google token exchange failed (${tokenResponse.status}).`);
+        }
+        const token = await tokenResponse.json();
+        if (typeof token.access_token !== "string") {
+            throw new Error("Google token response did not include an access token.");
+        }
+
+        const profileResponse = await fetch("https://openidconnect.googleapis.com/v1/userinfo", {
+            headers: { Authorization: `Bearer ${token.access_token}` },
+            signal: AbortSignal.timeout(10000)
+        });
+        if (!profileResponse.ok) {
+            throw new Error(`Google user profile request failed (${profileResponse.status}).`);
+        }
+        const profile = await profileResponse.json();
+        const gmail = normalizeGmail(profile.email);
+        if (typeof profile.sub !== "string" || !profile.sub || profile.email_verified !== true || !gmail) {
+            throw new Error("Google account must have a verified @gmail.com address.");
+        }
+
+        const user = await updateUsers(users => {
+            let existing = users.find(candidate => candidate.googleId === profile.sub);
+            if (!existing) {
+                existing = users.find(candidate => candidate.emailKey === gmail.emailKey);
+                if (existing?.googleId && existing.googleId !== profile.sub) {
+                    throw Object.assign(new Error("這個 Gmail 已連結其他 Google 帳戶。"), { status: 409 });
+                }
+                if (existing) {
+                    existing.googleId = profile.sub;
+                } else {
+                    const username = googleUsername(users, gmail.email);
+                    existing = {
+                        id: randomUUID(),
+                        email: gmail.email,
+                        emailKey: gmail.emailKey,
+                        username: username.username,
+                        usernameKey: username.usernameKey,
+                        name: typeof profile.name === "string" && profile.name.trim()
+                            ? profile.name.trim().slice(0, 100)
+                            : username.username,
+                        passwordSalt: randomBytes(16).toString("hex"),
+                        passwordHash: randomBytes(passwordLength).toString("hex"),
+                        googleId: profile.sub,
+                        role: "buyer",
+                        sellerStatus: "none",
+                        createdAt: new Date().toISOString()
+                    };
+                    users.push(existing);
+                }
+            }
+            return existing;
+        });
+
+        await startSession(req, user);
+        return res.redirect("/");
+    } catch (error) {
+        console.error("Google sign-in failed:", error);
+        return res.redirect("/?authError=google");
+    }
 });
 
 app.post("/api/auth/register", async (req, res) => {

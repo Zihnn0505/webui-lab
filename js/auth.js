@@ -5,6 +5,7 @@ const authCloseButton = document.querySelector("#auth-close-button");
 const authModeToggle = document.querySelector("#auth-mode-toggle");
 const authTitle = document.querySelector("#auth-title");
 const authSubmitButton = document.querySelector("#auth-submit-button");
+const authGoogleButton = document.querySelector("#auth-google-button");
 const authIdentifier = document.querySelector("#auth-identifier");
 const authIdentifierLabel = document.querySelector("#auth-identifier-label");
 const authUsernameField = document.querySelector("#auth-username-field");
@@ -100,6 +101,15 @@ async function loadCurrentUser() {
     try {
         const result = await readResponse(await fetch("api/auth/me", { cache: "no-store" }));
         renderUser(result.user);
+
+        const url = new URL(window.location.href);
+        if (url.searchParams.has("authError")) {
+            setAuthMode(false);
+            showAuthMessage("Google 登入未完成，請確認設定或再試一次。");
+            authDialog.showModal();
+            url.searchParams.delete("authError");
+            window.history.replaceState({}, "", url);
+        }
     } catch (error) {
         showAuthMessage(error.message);
     }
@@ -114,6 +124,11 @@ authOpenButton?.addEventListener("click", () => {
 authCloseButton?.addEventListener("click", () => authDialog.close());
 authModeToggle?.addEventListener("click", () => setAuthMode(!isRegisterMode));
 authForm?.addEventListener("submit", submitCredentials);
+authGoogleButton?.addEventListener("click", () => {
+    authGoogleButton.disabled = true;
+    showAuthMessage("正在連線至 Google…");
+    window.location.assign("api/auth/google");
+});
 
 logoutButton?.addEventListener("click", async () => {
     if (!window.confirm("確定要登出嗎？")) {

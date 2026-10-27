@@ -25,7 +25,9 @@ Web Programming 課程實作專案，使用 Express 提供網站與登入 API。
 
 - 按頁面上方的「登入／註冊」，註冊時輸入 `@gmail.com` 信箱、使用者名稱（2 到 30 個中英文、數字、底線、句點或連字號）與至少 8 個字元的密碼。登入時可在同一欄輸入 Gmail 或使用者名稱。
 - 使用者名稱不區分大小寫，且必須唯一；既有帳號仍可使用 Gmail 登入。
-- 這是 demo 帳號系統：不會連接 Google，也不會寄送驗證信；不會確認輸入的 Gmail 是否屬於使用者。
+- Google 登入需要在 Google Cloud 建立 OAuth 2.0 Web 用戶端，並將 `http://localhost:7777/api/auth/google/callback` 加入授權重新導向 URI；將用戶端 ID、用戶端密碼與重新導向 URI 分別設定到 `.env` 的 `GOOGLE_CLIENT_ID`、`GOOGLE_CLIENT_SECRET`、`GOOGLE_REDIRECT_URI`。正式環境請使用 HTTPS 的正式網址。
+- Google 登入會驗證 Google 回傳的 Gmail，並以相同 Gmail 連結既有帳號；新帳號會自動建立使用者名稱。未設定 Google OAuth 憑證時，Google 按鈕會提示登入尚未完成。
+- 一般密碼註冊仍是 demo 帳號系統，不會寄送驗證信，也不會確認輸入的 Gmail 是否屬於使用者。
 - 密碼使用 Node.js `scrypt` 雜湊後保存，不會以明文寫入 JSON。
 - 首次讀取時會建立 `data/users.json`，使用者資料儲存在網站靜態目錄之外。
 - 新帳號預設為 `buyer`，賣家狀態為 `none`。角色不接受註冊表單輸入。

@@ -198,11 +198,11 @@ function createVariantRow() {
     row.className = "group-form__variant";
     row.innerHTML = `
         <label class="group-form__field">
-            規格名稱 <span class="group-form__required" aria-hidden="true">*</span>
+            <span class="group-form__label-text">規格名稱 <span class="group-form__required" aria-hidden="true">*</span></span>
             <input name="variantName" type="text" maxlength="50" required>
         </label>
         <label class="group-form__field">
-            庫存數量 <span class="group-form__required" aria-hidden="true">*</span>
+            <span class="group-form__label-text">庫存數量 <span class="group-form__required" aria-hidden="true">*</span></span>
             <input name="variantStock" type="number" min="1" step="1" required>
         </label>
         <button class="group-form__button group-form__remove-variant" type="button" aria-label="移除此規格">移除</button>
@@ -214,12 +214,12 @@ function getCreateGroupFormMarkup() {
     return `
         <form class="group-form" id="create-group-form">
             <div class="group-form__grid">
-                <label class="group-form__field group-form__field--full">
-                    商品名稱 <span class="group-form__required" aria-hidden="true">*</span>
+                <label class="group-form__field">
+                    <span class="group-form__label-text">商品名稱 <span class="group-form__required" aria-hidden="true">*</span></span>
                     <input name="title" type="text" maxlength="100" required>
                 </label>
                 <label class="group-form__field">
-                    商品分類 <span class="group-form__required" aria-hidden="true">*</span>
+                    <span class="group-form__label-text">商品分類 <span class="group-form__required" aria-hidden="true">*</span></span>
                     <select name="category" required>
                         <option value="">請選擇分類</option>
                         <option>食品飲料</option>
@@ -230,38 +230,38 @@ function getCreateGroupFormMarkup() {
                     </select>
                 </label>
                 <label class="group-form__field">
-                    單價（每種規格相同） <span class="group-form__required" aria-hidden="true">*</span>
+                    <span class="group-form__label-text">單價（每種規格相同） <span class="group-form__required" aria-hidden="true">*</span></span>
                     <input name="price" type="number" min="0.01" max="100000000" step="0.01" required>
                 </label>
                 <label class="group-form__field">
-                    成團最低數量 <span class="group-form__required" aria-hidden="true">*</span>
+                    <span class="group-form__label-text">成團最低數量 <span class="group-form__required" aria-hidden="true">*</span></span>
                     <input name="minimumQuantity" type="number" min="1" step="1" required>
                 </label>
                 <label class="group-form__field">
-                    截止日期時間 <span class="group-form__required" aria-hidden="true">*</span>
+                    <span class="group-form__label-text">截止日期時間 <span class="group-form__required" aria-hidden="true">*</span></span>
                     <input name="deadline" type="datetime-local" required>
                 </label>
-                <label class="group-form__field group-form__field--full">
-                    商品圖片（可上傳或輸入圖片連結） <span class="group-form__required" aria-hidden="true">*</span>
+                <label class="group-form__field group-form__field--full group-form__field--image">
+                    <span class="group-form__label-text">商品圖片（可上傳或輸入圖片連結） <span class="group-form__required" aria-hidden="true">*</span></span>
                     <input name="imageFiles" type="file" accept="image/jpeg,image/png,image/webp" multiple>
                     <span class="group-form__hint">限 JPG、PNG、WebP，每張 5 MB，最多 5 張。可同時提供圖片連結。</span>
                     <textarea name="imageUrls" rows="2" placeholder="每行一個圖片連結（HTTP 或 HTTPS）"></textarea>
                     <span class="group-form__image-list" id="group-image-list"></span>
                 </label>
-                <label class="group-form__field group-form__field--full">
-                    商品描述（選填）
+                <label class="group-form__field group-form__field--full group-form__field--description">
+                    <span class="group-form__label-text">商品描述（選填）</span>
                     <textarea name="description" maxlength="2000" rows="3"></textarea>
                 </label>
                 <label class="group-form__field">
-                    預計出貨日期（選填）
+                    <span class="group-form__label-text">預計出貨日期（選填）</span>
                     <input name="estimatedShipDate" type="date">
                 </label>
                 <label class="group-form__field">
-                    限購數量（選填）
+                    <span class="group-form__label-text">限購數量（選填）</span>
                     <input name="limitPerBuyer" type="number" min="1" step="1">
                 </label>
                 <label class="group-form__field">
-                    配送方式（選填）
+                    <span class="group-form__label-text">配送方式（選填）</span>
                     <select name="shippingMethod">
                         <option value="">尚未設定</option>
                         <option value="home-delivery">宅配</option>
@@ -270,7 +270,7 @@ function getCreateGroupFormMarkup() {
                     </select>
                 </label>
                 <label class="group-form__field">
-                    運費（選填）
+                    <span class="group-form__label-text">運費（選填）</span>
                     <input name="shippingFee" type="number" min="0" max="100000000" step="1">
                 </label>
             </div>
