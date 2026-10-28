@@ -10,10 +10,10 @@
 ### 登入與註冊 API
 1. `GET /api/auth/me`：讀取目前 Session 的使用者，回傳 `{ user }`；未登入或帳號不存在時為 `{ "user": null }`。
 2. `POST /api/auth/register`：接收 `{ email, username, password }`；建立帳號並自動登入，回傳 `{ user }`。
-3. `POST /api/auth/login`：接收 `{ identifier, password }`；`identifier` 可為 Gmail 或使用者名稱，登入成功後建立 Session，回傳 `{ user }`。
+3. `POST /api/auth/login`：接收 `{ identifier, password }`；`identifier` 可為 Email 或使用者名稱，登入成功後建立 Session，回傳 `{ user }`。
 4. `POST /api/auth/logout`：銷毀 Session 並清除 Cookie，成功回應 `204`。
 5. `GET /api/auth/google`：開始 Google OAuth 登入；未設定 OAuth 憑證時導回首頁並附上登入錯誤狀態。
-6. `GET /api/auth/google/callback`：接收 Google OAuth 回呼、驗證 state 與已驗證的 Gmail；連結既有帳號或建立新帳號並登入，失敗時導回首頁顯示錯誤。
+6. `GET /api/auth/google/callback`：接收 Google OAuth 回呼、驗證 state 與已驗證的 Email；連結既有帳號或建立新帳號並登入，失敗時導回首頁顯示錯誤。
 
 ## 分類、商品列表與搜尋
 ### app.js
@@ -91,13 +91,13 @@
 
 ## server.js 共用功能
 - `publicUser()`：挑選可公開回傳的使用者欄位，並計算賣家權限。
-- `normalizeGmail()`：驗證並正規化 Gmail，供帳號識別及權限比對使用。
+- `normalizeEmail()`：驗證並正規化 Email，供帳號識別及權限比對使用。
 - `loadSellerAccessConfig()`：載入並驗證賣家 Email 白名單。
 - `isSellerAllowed()`：檢查使用者是否在賣家白名單。
 - `normalizeUsername()`：驗證使用者名稱並產生不區分大小寫的比對鍵。
 - `googleUsername()`：為 Google 新帳號產生不重複的使用者名稱。
 - `validatePassword()`：檢查密碼長度是否介於 8 到 128 個字元。
-- `passwordError()`、`invalidGmailError()`、`invalidLoginIdentifierError()`：建立登入與註冊輸入驗證錯誤。
+- `passwordError()`、`invalidEmailError()`、`invalidLoginIdentifierError()`：建立登入與註冊輸入驗證錯誤。
 - `startSession()`：重新產生 Session，設定使用者 ID 並保存。
 - `readUsers()`、`writeUsers()`、`updateUsers()`：讀取、原子寫入及序列化更新 `data/users.json`。
 - `readGroupBuys()`、`writeGroupBuys()`、`updateGroupBuys()`：讀取、原子寫入及序列化更新 `data/group-buys.json`。

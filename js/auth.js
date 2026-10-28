@@ -59,8 +59,8 @@ function setAuthMode(registerMode) {
     authSubmitButton.textContent = isRegisterMode ? "註冊並登入" : "登入";
     authModeToggle.textContent = isRegisterMode ? "已經有帳號？登入" : "還沒有帳號？註冊";
     authPassword.autocomplete = isRegisterMode ? "new-password" : "current-password";
-    authIdentifierLabel.textContent = isRegisterMode ? "Gmail" : "使用者名稱或 Mail";
-    authIdentifier.placeholder = isRegisterMode ? "name@gmail.com" : "請輸入使用者名稱或 Mail";
+    authIdentifierLabel.textContent = isRegisterMode ? "電子郵件" : "使用者名稱或 Email";
+    authIdentifier.placeholder = isRegisterMode ? "name@example.com" : "請輸入使用者名稱或 Email";
     authIdentifier.autocomplete = isRegisterMode ? "email" : "username";
     authUsernameField.hidden = !isRegisterMode;
     authUsername.required = isRegisterMode;

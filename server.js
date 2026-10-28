@@ -55,23 +55,27 @@ function publicUser(user) {
     return { id, email, name, role, sellerStatus, isSeller: isSellerAllowed(user) };
 }
 
-function normalizeGmail(value) {
+function normalizeEmail(value) {
     if (typeof value !== "string") {
         return null;
     }
 
     const email = value.trim().toLowerCase();
-    const match = /^([a-z0-9.!#$%&'*+/=?^_`{|}~-]+)@gmail\.com$/.exec(email);
+    const match = /^([a-z0-9.!#$%&'*+/=?^_`{|}~-]+)@((?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)$/.exec(email);
     if (!match || email.length > 254 || match[1].length > 64) {
         return null;
     }
 
-    const canonicalLocalPart = match[1].split("+", 1)[0].replaceAll(".", "");
-    if (!canonicalLocalPart) {
-        return null;
+    let emailKey = email;
+    if (match[2] === "gmail.com") {
+        const canonicalLocalPart = match[1].split("+", 1)[0].replaceAll(".", "");
+        if (!canonicalLocalPart) {
+            return null;
+        }
+        emailKey = `${canonicalLocalPart}@gmail.com`;
     }
 
-    return { email, emailKey: `${canonicalLocalPart}@gmail.com` };
+    return { email, emailKey };
 }
 
 async function loadSellerAccessConfig() {
@@ -81,7 +85,7 @@ async function loadSellerAccessConfig() {
     }
 
     return new Set(config.sellerAccess.allowedEmails.map(email => {
-        const normalized = normalizeGmail(email);
+        const normalized = normalizeEmail(email);
         if (!normalized) {
             throw new Error(`Invalid seller access email in config.json: ${email}`);
         }
@@ -90,7 +94,7 @@ async function loadSellerAccessConfig() {
 }
 
 function isSellerAllowed(user) {
-    const normalized = normalizeGmail(user.email);
+    const normalized = normalizeEmail(user.email);
     return Boolean(normalized && sellerAccessEmails.has(normalized.emailKey));
 }
 
@@ -133,12 +137,12 @@ function passwordError() {
     return Object.assign(new Error("密碼長度需為 8 到 128 個字元。"), { status: 400 });
 }
 
-function invalidGmailError() {
-    return Object.assign(new Error("請輸入有效的 @gmail.com 信箱。"), { status: 400 });
+function invalidEmailError() {
+    return Object.assign(new Error("請輸入有效的電子郵件信箱。"), { status: 400 });
 }
 
 function invalidLoginIdentifierError() {
-    return Object.assign(new Error("請輸入有效的 @gmail.com 信箱或使用者名稱。"), { status: 400 });
+    return Object.assign(new Error("請輸入有效的電子郵件信箱或使用者名稱。"), { status: 400 });
 }
 
 async function startSession(req, user) {
@@ -602,26 +606,26 @@ app.get("/api/auth/google/callback", async (req, res) => {
             throw new Error(`Google user profile request failed (${profileResponse.status}).`);
         }
         const profile = await profileResponse.json();
-        const gmail = normalizeGmail(profile.email);
-        if (typeof profile.sub !== "string" || !profile.sub || profile.email_verified !== true || !gmail) {
-            throw new Error("Google account must have a verified @gmail.com address.");
+        const email = normalizeEmail(profile.email);
+        if (typeof profile.sub !== "string" || !profile.sub || profile.email_verified !== true || !email) {
+            throw new Error("Google account must have a verified email address.");
         }
 
         const user = await updateUsers(users => {
             let existing = users.find(candidate => candidate.googleId === profile.sub);
             if (!existing) {
-                existing = users.find(candidate => candidate.emailKey === gmail.emailKey);
+                existing = users.find(candidate => candidate.emailKey === email.emailKey);
                 if (existing?.googleId && existing.googleId !== profile.sub) {
-                    throw Object.assign(new Error("這個 Gmail 已連結其他 Google 帳戶。"), { status: 409 });
+                    throw Object.assign(new Error("這個電子郵件已連結其他 Google 帳戶。"), { status: 409 });
                 }
                 if (existing) {
                     existing.googleId = profile.sub;
                 } else {
-                    const username = googleUsername(users, gmail.email);
+                    const username = googleUsername(users, email.email);
                     existing = {
                         id: randomUUID(),
-                        email: gmail.email,
-                        emailKey: gmail.emailKey,
+                        email: email.email,
+                        emailKey: email.emailKey,
                         username: username.username,
                         usernameKey: username.usernameKey,
                         name: typeof profile.name === "string" && profile.name.trim()
@@ -649,9 +653,9 @@ app.get("/api/auth/google/callback", async (req, res) => {
 });
 
 app.post("/api/auth/register", async (req, res) => {
-    const gmail = normalizeGmail(req.body?.email);
-    if (!gmail) {
-        return res.status(400).json({ error: invalidGmailError().message });
+    const email = normalizeEmail(req.body?.email);
+    if (!email) {
+        return res.status(400).json({ error: invalidEmailError().message });
     }
     const username = normalizeUsername(req.body?.username);
     if (!username) {
@@ -664,8 +668,8 @@ app.post("/api/auth/register", async (req, res) => {
     const passwordSalt = randomBytes(16).toString("hex");
     const passwordHash = (await scrypt(req.body.password, passwordSalt, passwordLength)).toString("hex");
     const user = await updateUsers(users => {
-        if (users.some(candidate => candidate.emailKey === gmail.emailKey)) {
-            throw Object.assign(new Error("這個 Gmail 已註冊，請直接登入。"), { status: 409 });
+        if (users.some(candidate => candidate.emailKey === email.emailKey)) {
+            throw Object.assign(new Error("這個電子郵件已註冊，請直接登入。"), { status: 409 });
         }
         if (users.some(candidate => (candidate.usernameKey ?? candidate.name?.trim().toLowerCase()) === username.usernameKey)) {
             throw Object.assign(new Error("這個使用者名稱已有人使用，請換一個名稱。"), { status: 409 });
@@ -673,8 +677,8 @@ app.post("/api/auth/register", async (req, res) => {
 
         const createdUser = {
             id: randomUUID(),
-            email: gmail.email,
-            emailKey: gmail.emailKey,
+            email: email.email,
+            emailKey: email.emailKey,
             username: username.username,
             usernameKey: username.usernameKey,
             name: username.username,
@@ -696,9 +700,9 @@ app.post("/api/auth/register", async (req, res) => {
 app.post("/api/auth/login", async (req, res) => {
     const loginValue = req.body?.identifier ?? req.body?.email;
     const identifier = typeof loginValue === "string" ? loginValue.trim() : "";
-    const gmail = normalizeGmail(identifier);
-    const username = gmail ? null : normalizeUsername(identifier);
-    if (!gmail && !username) {
+    const email = normalizeEmail(identifier);
+    const username = email ? null : normalizeUsername(identifier);
+    if (!email && !username) {
         return res.status(400).json({ error: invalidLoginIdentifierError().message });
     }
     if (!validatePassword(req.body?.password)) {
@@ -706,8 +710,8 @@ app.post("/api/auth/login", async (req, res) => {
     }
 
     const users = await readUsers();
-    const user = users.find(candidate => gmail
-        ? candidate.emailKey === gmail.emailKey
+    const user = users.find(candidate => email
+        ? candidate.emailKey === email.emailKey
         : (candidate.usernameKey ?? candidate.name?.trim().toLowerCase()) === username.usernameKey) ?? null;
     const passwordSalt = user?.passwordSalt ?? dummyPasswordSalt;
     const expectedHash = user ? Buffer.from(user.passwordHash, "hex") : dummyPasswordHash;
