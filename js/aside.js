@@ -64,8 +64,9 @@ function setupSidebarCounts() {
         {
             type: "orders",
             page: "order.html",
-            listSelector: ".order-list",
-            itemSelector: ".order-card"
+            listSelector: ".order-page",
+            itemSelector: ".order-card",
+            fallbackSelector: ".result-count strong"
         }
     ];
 

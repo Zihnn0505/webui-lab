@@ -520,6 +520,22 @@ function destroySession(req) {
     });
 }
 
+function redirectToGoogleAppPage(res, hasAuthError = false) {
+    const redirectUri = process.env.GOOGLE_REDIRECT_URI;
+    const callbackPath = "/api/auth/google/callback";
+    let appBasePath = "";
+
+    if (redirectUri) {
+        const redirectPath = new URL(redirectUri).pathname;
+        if (!redirectPath.endsWith(callbackPath)) {
+            throw new Error(`GOOGLE_REDIRECT_URI path must end with ${callbackPath}.`);
+        }
+        appBasePath = redirectPath.slice(0, -callbackPath.length).replace(/\/$/, "");
+    }
+
+    return res.redirect(`${appBasePath}/${hasAuthError ? "?authError=google" : ""}`);
+}
+
 app.get("/api/auth/me", async (req, res) => {
     res.set("Cache-Control", "no-store");
 
@@ -541,7 +557,7 @@ app.get("/api/auth/google", async (req, res) => {
     const clientId = process.env.GOOGLE_CLIENT_ID;
     const redirectUri = process.env.GOOGLE_REDIRECT_URI;
     if (!clientId || !process.env.GOOGLE_CLIENT_SECRET || !redirectUri) {
-        return res.redirect("/?authError=google");
+        return redirectToGoogleAppPage(res, true);
     }
 
     const state = randomBytes(32).toString("base64url");
@@ -568,11 +584,11 @@ app.get("/api/auth/google/callback", async (req, res) => {
     delete req.session.googleOAuth;
     if (!pendingAuth || typeof req.query.state !== "string" || req.query.state !== pendingAuth.state) {
         await saveSession(req);
-        return res.redirect("/?authError=google");
+        return redirectToGoogleAppPage(res, true);
     }
     if (typeof req.query.error === "string" || typeof req.query.code !== "string") {
         await saveSession(req);
-        return res.redirect("/?authError=google");
+        return redirectToGoogleAppPage(res, true);
     }
     await saveSession(req);
 
@@ -645,10 +661,10 @@ app.get("/api/auth/google/callback", async (req, res) => {
         });
 
         await startSession(req, user);
-        return res.redirect("/");
+        return redirectToGoogleAppPage(res);
     } catch (error) {
         console.error("Google sign-in failed:", error);
-        return res.redirect("/?authError=google");
+        return redirectToGoogleAppPage(res, true);
     }
 });
 
