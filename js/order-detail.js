@@ -1,8 +1,8 @@
-import { demoOrders, formatOrderDate, orderStatuses } from "./order-data.js";
+import { orders, formatOrderDate, orderStatuses } from "./order-data.js";
 
 const detailRoot = document.querySelector("#order-detail-content");
 const orderId = new URLSearchParams(window.location.search).get("id");
-const order = demoOrders.find(item => item.id === orderId);
+const order = orders.find(item => item.id === orderId);
 
 function createElement(tag, className, text) {
     const element = document.createElement(tag);

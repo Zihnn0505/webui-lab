@@ -1,4 +1,4 @@
-import { demoOrders, formatOrderDate, orderStatuses } from "./order-data.js";
+import { orders, formatOrderDate, orderStatuses } from "./order-data.js";
 
 const orderList = document.querySelector("#order-list");
 const endedOrderList = document.querySelector("#ended-order-list");
@@ -165,27 +165,27 @@ function setActiveFilter(filter) {
 function renderOrders() {
     const counts = Object.fromEntries(Object.keys(orderStatuses).map(status => [
         status,
-        demoOrders.filter(order => order.status === status).length
+        orders.filter(order => order.status === status).length
     ]));
-    const actionableCount = demoOrders.filter(orderNeedsAction).length;
-    totalCount.textContent = String(demoOrders.length);
+    const actionableCount = orders.filter(orderNeedsAction).length;
+    totalCount.textContent = String(orders.length);
     reminder.hidden = actionableCount === 0;
     reminderText.textContent = `${actionableCount} 筆訂單需要你處理`;
     filterButtons.forEach(button => {
         const filter = button.dataset.filter;
-        const count = filter === "all" ? demoOrders.length : counts[filter];
+        const count = filter === "all" ? orders.length : counts[filter];
         button.querySelector("[data-filter-count]").textContent = String(count);
         button.classList.toggle("is-empty", count === 0);
     });
 
     const filteredOrders = activeFilter === "all"
-        ? demoOrders.filter(order => order.status !== "cancelled")
+        ? orders.filter(order => order.status !== "cancelled")
         : activeFilter === "actionable"
-            ? demoOrders.filter(orderNeedsAction)
-            : demoOrders.filter(order => order.status === activeFilter);
+            ? orders.filter(orderNeedsAction)
+            : orders.filter(order => order.status === activeFilter);
     const cancelledMatches = activeFilter === "cancelled"
         ? sortedOrders(filteredOrders)
-        : sortedOrders(demoOrders.filter(order => order.status === "cancelled"));
+        : sortedOrders(orders.filter(order => order.status === "cancelled"));
     const cancelledOrders = activeFilter === "cancelled"
         ? cancelledMatches.slice(0, visibleCount)
         : cancelledMatches;

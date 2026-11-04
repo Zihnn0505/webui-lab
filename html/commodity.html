@@ -74,7 +74,7 @@
                 <div class="page-head">
                     <div>
                         <h1 class="page-title">瀏覽商品</h1>
-                        <p class="result-count" aria-live="polite">顯示 <strong class="result-range">1-20</strong> 筆，共 <span class="result-total">67</span> 筆團購</p>
+                        <p class="result-count" aria-live="polite">顯示 <strong class="result-range">0-0</strong> 筆，共 <span class="result-total">0</span> 筆團購</p>
                         <p class="result-count" id="catalog-status" role="status" aria-live="polite" hidden></p>
                     </div>
                 </div>
@@ -93,7 +93,7 @@
                     <div class="sort">
                         <label for="sort-select">排序</label>
                         <select id="sort-select" name="sort">
-                            <option value="popular">依人氣</option>
+                            <option value="popular">依人氣（無近期資料時依最新建立）</option>
                             <option value="ending-soon">依即將截止</option>
                             <option value="progress">依成團進度</option>
                             <option value="price-asc">依價格（由低到高）</option>
@@ -101,77 +101,7 @@
                         </select>
                     </div>
                 </div>
-                <ul class="cards">
-                    <li class="card" data-min="50" data-stock="120" data-paid="32" data-held="6">
-                        <div class="card__media" style="--tone:#D6E8DF">
-                            <span class="pill pill--open">募集中</span>
-                        </div>
-                        <div class="card__body">
-                            <h3 class="card__title"><a class="card__link" href="#">商品名稱</a></h3>
-                            <p class="card__price">$499</p>
-                            <div class="progress" style="--value:64" role="progressbar" aria-label="成團進度" aria-valuenow="64" aria-valuemin="0" aria-valuemax="100"></div>
-                            <p class="card__meta">已付款 32／最低 50</p>
-                            <p class="card__foot">
-                                <span class="card__stock">剩餘 82 件</span>
-                                <span class="countdown" data-end="2026-10-01T20:00:00+08:00">剩 8 小時</span>
-                            </p>
-                        </div>
-                    </li>
-                    <li class="card" data-min="100" data-stock="150" data-paid="40" data-held="0">
-                        <div class="card__media" style="--tone:#F3E4C9">
-                            <span class="pill pill--soon">即將截止</span>
-                        </div>
-                        <div class="card__body">
-                            <h3 class="card__title"><a class="card__link" href="#">商品名稱</a></h3>
-                            <p class="card__price">$399</p>
-                            <div class="progress" style="--value:40;--fill:var(--c-warn-fill)"
-                                 role="progressbar" aria-label="成團進度"
-                                 aria-valuenow="40" aria-valuemin="0" aria-valuemax="100"></div>
-                            <p class="card__meta">已付款 40／最低 100</p>
-                            <p class="card__foot">
-                                <span class="card__stock">剩餘名額 110 件</span>
-                                <span class="countdown" data-end="2026-09-28T23:30:00+08:00">剩 2 小時</span>
-                            </p>
-                        </div>
-                    </li>
-
-                    <li class="card" data-min="60" data-stock="80" data-paid="71" data-held="0">
-                        <div class="card__media" style="--tone:#E3DDF0">
-                            <span class="pill pill--done">已成團</span>
-                        </div>
-                        <div class="card__body">
-                            <h3 class="card__title"><a class="card__link" href="#">商品名稱</a></h3>
-                            <p class="card__price">$680</p>
-                            <div class="progress" style="--value:100"
-                                 role="progressbar" aria-label="成團進度"
-                                 aria-valuenow="100" aria-valuemin="0" aria-valuemax="100"></div>
-                            <p class="card__meta">已付款 71／最低 60</p>
-                            <p class="card__foot">
-                                <span class="card__stock card__stock--low">只剩 9 件</span>
-                                <span class="countdown" data-end="2026-09-29T20:00:00+08:00">剩 1 天</span>
-                            </p>
-                        </div>
-                    </li>
-
-                    <li class="card card--full" data-min="60" data-stock="90" data-paid="90" data-held="0">
-                        <div class="card__media" style="--tone:#DCE6F2">
-                            <span class="pill pill--full">已額滿</span>
-                        </div>
-                        <div class="card__body">
-                            <h3 class="card__title"><a class="card__link" href="#">商品名稱</a></h3>
-                            <p class="card__price">$320</p>
-                            <div class="progress" style="--value:100"
-                                 role="progressbar" aria-label="成團進度"
-                                 aria-valuenow="100" aria-valuemin="0" aria-valuemax="100"></div>
-                            <p class="card__meta">已付款 90／最低 60</p>
-                            <p class="card__foot">
-                                <span class="card__stock card__stock--low">剩餘名額 0 件</span>
-                                <span>已結束收單</span>
-                            </p>
-                        </div>
-                    </li>
-
-                </ul>
+                <ul class="cards"></ul>
                 <nav class="pagination" aria-label="分頁">
                 </nav>
 
@@ -180,7 +110,7 @@
     </div>
 
     <script src="js/aside.js"></script>
-    <script src="js/commodity.js"></script>
+    <script type="module" src="js/commodity.js"></script>
     <script src="js/product-detail.js"></script>
     <script src="js/cart-state.js"></script>
     <script src="js/auth.js"></script>
