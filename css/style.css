@@ -1782,12 +1782,39 @@ ul { margin: 0; padding: 0; list-style: none; }
 }
 .seller-action:hover { background: var(--c-tint); }
 
+.seller-action--danger {
+  border-color: #b42318;
+  color: #b42318;
+}
+
+.seller-action--danger:hover {
+  color: #fff;
+  background: #b42318;
+}
+
+.seller-action--danger:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
 .seller-action--primary {
   color: var(--c-on-brand);
   background: var(--c-brand);
   border-color: var(--c-brand);
 }
 .seller-action--primary:hover { background: var(--c-brand); filter: brightness(1.08); }
+
+@media (prefers-color-scheme: dark) {
+  .seller-action--danger {
+    border-color: #f87171;
+    color: #f87171;
+  }
+
+  .seller-action--danger:hover {
+    color: #181511;
+    background: #f87171;
+  }
+}
 
 @media (max-width: 560px) {
   .setting-modal__content--wide { padding: 20px 16px; }

@@ -146,9 +146,56 @@ function renderGroupBuy(groupBuy) {
     editButton.textContent = "編輯";
     editButton.addEventListener("click", () => openCreateGroupModal(groupBuy));
     actions.append(groupNumber, editButton);
+    if (groupBuy.status === "ended"
+        && Number(groupBuy.paidQuantity || 0) === 0
+        && Number(groupBuy.reservedQuantity || 0) === 0) {
+        const deleteButton = document.createElement("button");
+        deleteButton.className = "seller-action seller-action--danger";
+        deleteButton.type = "button";
+        deleteButton.textContent = "刪除";
+        deleteButton.setAttribute("aria-label", `刪除未成團商品 ${groupBuy.title}`);
+        deleteButton.addEventListener("click", () => deleteGroupBuy(groupBuy));
+        actions.append(deleteButton);
+    }
     actionsCell.append(actions);
     row.append(actionsCell);
     return row;
+}
+
+async function deleteGroupBuy(groupBuy) {
+    const confirmed = window.confirm(`確定刪除未成團商品「${groupBuy.title}」嗎？刪除後無法復原。`);
+    if (!confirmed) {
+        return;
+    }
+
+    const row = Array.from(groupList?.querySelectorAll("tr[data-group-buy-id]") ?? [])
+        .find(item => item.dataset.groupBuyId === groupBuy.id);
+    const deleteButton = row?.querySelector(".seller-action--danger");
+    if (deleteButton) {
+        deleteButton.disabled = true;
+        deleteButton.textContent = "刪除中…";
+    }
+
+    try {
+        const result = await readGroupBuyResponse(await fetch(`api/group-buys/${encodeURIComponent(groupBuy.id)}`, {
+            method: "DELETE"
+        }));
+        sellerGroupBuys = sellerGroupBuys.filter(item => item.id !== result.groupBuy.id);
+        row?.remove();
+        if (groupList && !groupList.querySelector("tr[data-group-buy-id]")) {
+            groupList.replaceChildren(renderEmptyGroupRow());
+        }
+        updateGroupCount();
+        updateSellerStats(sellerGroupBuys);
+        updateGroupFilters();
+        showGroupStatus(`已刪除未成團 ${result.groupBuy.groupNumber}。`);
+    } catch (error) {
+        if (deleteButton) {
+            deleteButton.disabled = false;
+            deleteButton.textContent = "刪除";
+        }
+        showGroupStatus(error.message, true);
+    }
 }
 
 function updateGroupFilters() {

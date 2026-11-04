@@ -854,6 +854,30 @@ app.put("/api/group-buys/:groupId", requireSellerAccess, async (req, res) => {
     return res.json({ groupBuy: groupBuyWithComputedFields(updatedGroupBuy) });
 });
 
+app.delete("/api/group-buys/:groupId", requireSellerAccess, async (req, res) => {
+    const user = req.sellerUser;
+    const deletedGroupBuy = await updateGroupBuys(groupBuys => {
+        const index = groupBuys.findIndex(groupBuy =>
+            groupBuy.id === req.params.groupId && groupBuy.sellerId === user.id);
+        if (index < 0) {
+            throw Object.assign(new Error("找不到這筆團購。"), { status: 404 });
+        }
+
+        const groupBuy = groupBuys[index];
+        if (groupBuyStatus(groupBuy) !== "ended") {
+            throw Object.assign(new Error("只有未成團的團購可以刪除。"), { status: 409 });
+        }
+        if (groupBuy.paidQuantity > 0 || groupBuy.reservedQuantity > 0) {
+            throw Object.assign(new Error("此團購已有付款或預扣訂單，為保留訂單紀錄無法刪除。"), { status: 409 });
+        }
+
+        groupBuys.splice(index, 1);
+        return { id: groupBuy.id, groupNumber: groupBuy.groupNumber };
+    });
+
+    return res.json({ groupBuy: deletedGroupBuy });
+});
+
 app.post(
     "/api/group-buys/images",
     requireSellerAccess,
