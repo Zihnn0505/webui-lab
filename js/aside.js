@@ -52,78 +52,103 @@ function setActiveMenu() {
 }
 
 function setupSidebarCounts() {
-    const countConfigs = [
-        {
-            type: "products",
-            page: "commodity.html",
-            listSelector: ".cards",
-            itemSelector: ".card",
-            fallbackSelector: ".result-total",
-            apiCountEndpoint: "api/group-buys"
-        },
-        {
-            type: "orders",
-            page: "order.html",
-            listSelector: ".order-page",
-            itemSelector: ".order-card",
-            fallbackSelector: ".result-count strong"
-        }
-    ];
+    setupProductCount();
+    setupOrderCount();
+}
 
-    countConfigs.forEach(config => {
-        const badge = document.querySelector(`[data-count-for="${config.type}"]`);
-        if (!badge) {
+function setupProductCount() {
+    const badge = document.querySelector('[data-count-for="products"]');
+    if (!badge) {
+        return;
+    }
+
+    const storageKey = "webui-demo-product-count";
+    try {
+        const cachedCount = Number(localStorage.getItem(storageKey));
+        if (Number.isSafeInteger(cachedCount) && cachedCount >= 0) {
+            badge.textContent = String(cachedCount);
+        }
+    } catch (error) {
+        console.error("無法讀取快取的商品數量。", error);
+    }
+
+    fetch("api/group-buys", { cache: "no-store" })
+        .then(async response => {
+            const result = await response.json().catch(() => ({}));
+            if (!response.ok) {
+                throw new Error(result.error || `商品列表載入失敗（${response.status}）。`);
+            }
+            if (!Array.isArray(result.groupBuys)) {
+                throw new Error("商品列表回應格式錯誤。");
+            }
+            return result.groupBuys.length;
+        })
+        .then(count => {
+            badge.textContent = String(count);
+            try {
+                localStorage.setItem(storageKey, String(count));
+            } catch (error) {
+                console.error("無法快取商品數量。", error);
+            }
+        })
+        .catch(error => console.error(error));
+}
+
+function setupOrderCount() {
+    const badge = document.querySelector('[data-count-for="orders"]');
+    if (!badge) {
+        return;
+    }
+
+    const orderPage = location.pathname.split("/").pop() === "order.html"
+        ? document.querySelector(".order-page")
+        : null;
+
+    function updateCount(user = authenticatedUser) {
+        badge.removeAttribute("title");
+        if (!user?.id) {
+            badge.textContent = "0";
             return;
         }
 
-        const currentPage = location.pathname.split("/").pop();
-        const list = currentPage === config.page
-            ? document.querySelector(config.listSelector)
-            : null;
-        if (list) {
-            const updateCount = () => {
-                badge.textContent = String(list.querySelectorAll(config.itemSelector).length);
-            };
+        if (orderPage) {
+            const visibleOrders = Array.from(orderPage.querySelectorAll("#order-list .order-card"))
+                .filter(order => order.dataset.status !== "done");
+            badge.textContent = String(visibleOrders.length);
+            return;
+        }
+
+        try {
+            const storedOrders = localStorage.getItem(`webui-demo-orders:${user.id}`);
+            const orders = storedOrders ? JSON.parse(storedOrders) : [];
+            if (!Array.isArray(orders)) {
+                throw new Error("訂單資料格式錯誤，請清除瀏覽器的示範訂單資料後再試。");
+            }
+            badge.textContent = String(orders.filter(order => order?.status !== "done").length);
+        } catch (error) {
+            badge.textContent = "!";
+            badge.title = "訂單數量讀取失敗";
+            console.error(error);
+        }
+    }
+
+    updateCount();
+    document.addEventListener("auth:user-changed", event => updateCount(event.detail.user));
+    document.addEventListener("orders:updated", () => updateCount());
+    window.addEventListener("storage", event => {
+        if (event.key === null || event.key === `webui-demo-orders:${authenticatedUser?.id}`) {
             updateCount();
-            new MutationObserver(updateCount).observe(list, { childList: true, subtree: true });
-            return;
         }
-
-        fetch(config.page)
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error(`載入 ${config.page} 失敗（${response.status}）。`);
-                }
-                return response.text();
-            })
-            .then(async pageHtml => {
-                const page = new DOMParser().parseFromString(pageHtml, "text/html");
-                const countElement = config.fallbackSelector
-                    ? page.querySelector(config.fallbackSelector)
-                    : null;
-                let count = countElement
-                    ? Number(countElement.textContent)
-                    : page.querySelectorAll(`${config.listSelector} ${config.itemSelector}`).length;
-                if (!Number.isInteger(count) || count < 0) {
-                    throw new Error(`無法取得 ${config.page} 的項目數量。`);
-                }
-
-                if (config.apiCountEndpoint) {
-                    const response = await fetch(config.apiCountEndpoint, { cache: "no-store" });
-                    const result = await response.json().catch(() => ({}));
-                    if (!response.ok) {
-                        throw new Error(result.error || `商品列表載入失敗（${response.status}）。`);
-                    }
-                    if (!Array.isArray(result.groupBuys)) {
-                        throw new Error("商品列表回應格式錯誤。");
-                    }
-                    count += result.groupBuys.length;
-                }
-
-                badge.textContent = String(count);
-            })
-            .catch(error => console.error(error));
     });
+
+    if (orderPage) {
+        new MutationObserver(() => updateCount()).observe(orderPage, {
+            attributes: true,
+            attributeFilter: ["open"],
+            childList: true,
+            subtree: true
+        });
+    }
 }
 
 // 設定小視窗

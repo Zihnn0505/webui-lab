@@ -17,6 +17,7 @@ const logoutButton = document.querySelector("#logout-button");
 const authStatus = document.querySelector("#auth-status");
 
 let isRegisterMode = false;
+window.authState = { ready: false, user: null };
 
 function showAuthMessage(message) {
     if (!authStatus) {
@@ -29,6 +30,7 @@ function showAuthMessage(message) {
 
 function renderUser(user) {
     const isSignedIn = Boolean(user);
+    window.authState = { ready: true, user };
 
     if (userName) {
         userName.textContent = user?.name ?? "";
@@ -111,6 +113,7 @@ async function loadCurrentUser() {
             window.history.replaceState({}, "", url);
         }
     } catch (error) {
+        window.authState = { ready: true, user: null, error: error.message };
         showAuthMessage(error.message);
         document.dispatchEvent(new CustomEvent("auth:load-failed", { detail: { error: error.message } }));
     }

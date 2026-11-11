@@ -37,6 +37,7 @@ export function saveOrder(userId, order) {
     const orders = getOrders(userId);
     orders.unshift(order);
     localStorage.setItem(ordersStorageKey(userId), JSON.stringify(orders));
+    document.dispatchEvent(new Event("orders:updated"));
 }
 
 export function formatOrderDate(value) {

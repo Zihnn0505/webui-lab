@@ -226,16 +226,27 @@ function renderOrders() {
         : filteredOrders.length <= visibleCount;
 }
 
-document.addEventListener("auth:user-changed", event => {
+function loadUserOrders(user) {
     try {
-        orders = getOrders(event.detail.user?.id);
+        orders = getOrders(user?.id);
         ordersLoadError = "";
     } catch (error) {
         orders = [];
         ordersLoadError = error.message;
     }
     renderOrders();
+}
+
+document.addEventListener("auth:user-changed", event => loadUserOrders(event.detail.user));
+document.addEventListener("auth:load-failed", event => {
+    orders = [];
+    ordersLoadError = `無法確認登入狀態：${event.detail.error}`;
+    renderOrders();
 });
+
+if (window.authState?.ready) {
+    loadUserOrders(window.authState.user);
+}
 
 filterButtons.forEach(button => {
     button.addEventListener("click", () => setActiveFilter(button.dataset.filter));
