@@ -1,3 +1,5 @@
+import { saveOrder } from "./order-data.js";
+
 const detailDialog = document.createElement("dialog");
 detailDialog.className = "product-dialog";
 detailDialog.setAttribute("aria-labelledby", "product-dialog-title");
@@ -65,10 +67,77 @@ cartDialog.innerHTML = `
         </div>
         <ul class="cart-items"></ul>
         <p class="cart-empty" hidden>購物車目前沒有商品。</p>
+        <p class="cart-status" role="status" aria-live="polite" hidden></p>
         <p class="cart-total"></p>
-        <p class="cart-notice">此示範網站尚未串接付款服務，商品尚未下單。</p>
+        <p class="cart-notice">此示範網站不會收款；填寫收件資訊後即可建立示範訂單。</p>
+        <button class="btn cart-checkout" type="button">填寫收件資訊</button>
     </div>`;
 document.body.append(cartDialog);
+
+const checkoutDialog = document.createElement("dialog");
+checkoutDialog.className = "product-dialog product-dialog--checkout";
+checkoutDialog.setAttribute("aria-labelledby", "checkout-dialog-title");
+checkoutDialog.innerHTML = `
+    <div class="product-dialog__content">
+        <div class="product-dialog__header">
+            <h2 id="checkout-dialog-title">填寫購買與收件資訊</h2>
+            <button class="product-dialog__close" type="button" aria-label="關閉結帳視窗">×</button>
+        </div>
+        <form class="checkout-form" novalidate>
+            <ul class="checkout-summary" aria-label="本次購買商品"></ul>
+            <p class="checkout-summary__total"></p>
+            <div class="checkout-fields">
+                <label class="auth-field">
+                    購買人姓名
+                    <input name="buyerName" type="text" autocomplete="name" required maxlength="60">
+                </label>
+                <label class="auth-field">
+                    收件人姓名
+                    <input name="recipientName" type="text" autocomplete="shipping name" required maxlength="60">
+                </label>
+                <label class="auth-field">
+                    Email
+                    <input name="email" type="email" autocomplete="email" required maxlength="254">
+                </label>
+                <label class="auth-field">
+                    聯絡電話
+                    <input name="phone" type="tel" autocomplete="tel" inputmode="tel" pattern="[0-9]{8,15}" required maxlength="15" placeholder="請輸入 8 至 15 位數字">
+                </label>
+                <label class="auth-field checkout-fields__full">
+                    取貨方式
+                    <select name="pickupMethod" required>
+                        <option value="711">7-ELEVEN 店到店</option>
+                        <option value="shopee">蝦皮店到店</option>
+                        <option value="home">宅配到府</option>
+                    </select>
+                </label>
+                <div class="auth-field checkout-fields__full checkout-location">
+                    <label for="checkout-store-name">取貨門市名稱</label>
+                    <input id="checkout-store-name" name="storeName" type="text" maxlength="80" placeholder="請輸入門市名稱">
+                    <label for="checkout-store-code">門市代碼（選填）</label>
+                    <input id="checkout-store-code" name="storeCode" type="text" maxlength="20" placeholder="如知道門市代碼可填寫">
+                </div>
+                <label class="auth-field checkout-fields__full checkout-address" hidden>
+                    宅配地址
+                    <input name="address" type="text" autocomplete="shipping street-address" maxlength="200" placeholder="縣市、區域、街道與門牌號碼">
+                </label>
+            </div>
+            <p class="checkout-form__notice">這是示範下單流程，不會進行金流交易或扣款。</p>
+            <p class="checkout-form__error" role="alert" hidden></p>
+            <div class="checkout-form__actions">
+                <button class="btn checkout-form__submit" type="submit">確認建立示範訂單</button>
+            </div>
+        </form>
+        <section class="checkout-success" aria-live="polite" hidden>
+            <h3>示範訂單已建立</h3>
+            <p class="checkout-success__message">尚未付款，不會扣款。</p>
+            <div class="checkout-form__actions">
+                <a class="btn checkout-success__detail" href="order.html">查看訂單</a>
+                <button class="btn checkout-success__close" type="button">繼續逛逛</button>
+            </div>
+        </section>
+    </div>`;
+document.body.append(checkoutDialog);
 
 const productTitle = detailDialog.querySelector("#product-dialog-title");
 const productBadge = detailDialog.querySelector(".product-detail__badge");
@@ -89,7 +158,17 @@ const addButton = detailDialog.querySelector(".product-detail__add");
 const buyButton = detailDialog.querySelector(".product-detail__buy");
 const cartItems = cartDialog.querySelector(".cart-items");
 const cartEmpty = cartDialog.querySelector(".cart-empty");
+const cartStatus = cartDialog.querySelector(".cart-status");
 const cartTotal = cartDialog.querySelector(".cart-total");
+const cartCheckoutButton = cartDialog.querySelector(".cart-checkout");
+const checkoutForm = checkoutDialog.querySelector(".checkout-form");
+const checkoutSummary = checkoutDialog.querySelector(".checkout-summary");
+const checkoutTotal = checkoutDialog.querySelector(".checkout-summary__total");
+const checkoutMethod = checkoutForm.elements.namedItem("pickupMethod");
+const checkoutLocation = checkoutDialog.querySelector(".checkout-location");
+const checkoutAddress = checkoutDialog.querySelector(".checkout-address");
+const checkoutError = checkoutDialog.querySelector(".checkout-form__error");
+const checkoutSuccess = checkoutDialog.querySelector(".checkout-success");
 const productAuthDialog = document.querySelector("#auth-dialog");
 const productAuthOpenButton = document.querySelector("#auth-open-button");
 let activeProduct;
@@ -134,11 +213,43 @@ function renderCart() {
     cart.forEach(item => {
         const row = document.createElement("li");
         row.className = "cart-item";
+        row.dataset.cartItemId = item.id;
         const label = document.createElement("span");
-        label.textContent = `${item.title}${item.variantName ? `（${item.variantName}）` : ""} × ${item.quantity}`;
+        label.className = "cart-item__name";
+        label.textContent = `${item.title}${item.variantName ? `（${item.variantName}）` : ""}`;
+        const controls = document.createElement("div");
+        controls.className = "cart-item__controls";
+        controls.setAttribute("aria-label", `${item.title} 購買數量`);
+        const decrease = document.createElement("button");
+        decrease.className = "cart-item__quantity-button";
+        decrease.type = "button";
+        decrease.dataset.cartAction = "decrease";
+        decrease.textContent = "−";
+        decrease.setAttribute("aria-label", `減少 ${item.title} 數量`);
+        decrease.disabled = Number(item.quantity) <= 1;
+        const quantity = document.createElement("span");
+        quantity.className = "cart-item__quantity";
+        quantity.textContent = String(item.quantity);
+        quantity.setAttribute("aria-live", "polite");
+        const increase = document.createElement("button");
+        increase.className = "cart-item__quantity-button";
+        increase.type = "button";
+        increase.dataset.cartAction = "increase";
+        increase.textContent = "＋";
+        increase.setAttribute("aria-label", `增加 ${item.title} 數量`);
+        const maximum = Number(item.groupBuy?.availableQuantity);
+        increase.disabled = Number.isFinite(maximum) && maximum > 0 && Number(item.quantity) >= maximum;
+        controls.append(decrease, quantity, increase);
         const price = document.createElement("strong");
+        price.className = "cart-item__price";
         price.textContent = `$${(Number(item.price) * Number(item.quantity)).toLocaleString("zh-TW")}`;
-        row.append(label, price);
+        const remove = document.createElement("button");
+        remove.className = "cart-item__remove";
+        remove.type = "button";
+        remove.dataset.cartAction = "remove";
+        remove.textContent = "刪除";
+        remove.setAttribute("aria-label", `刪除 ${item.title}`);
+        row.append(label, price, controls, remove);
         cartItems.append(row);
         total += Number(item.price) * Number(item.quantity);
     });
@@ -146,10 +257,184 @@ function renderCart() {
     cartEmpty.hidden = cart.length > 0;
     cartTotal.hidden = cart.length === 0;
     cartTotal.textContent = `小計 $${total.toLocaleString("zh-TW")}`;
+    cartCheckoutButton.hidden = cart.length === 0;
+}
+
+function updateCartItem(action, itemId) {
+    try {
+        const cart = readCart();
+        const itemIndex = cart.findIndex(item => item.id === itemId);
+        if (itemIndex < 0) {
+            throw new Error("找不到這個購物車品項，請重新整理後再試。");
+        }
+
+        if (action === "remove") {
+            cart.splice(itemIndex, 1);
+        } else {
+            const item = cart[itemIndex];
+            const quantity = Number(item.quantity);
+            if (action === "decrease" && quantity > 1) {
+                item.quantity = quantity - 1;
+            } else if (action === "increase") {
+                const maximum = Number(item.groupBuy?.availableQuantity);
+                if (Number.isFinite(maximum) && maximum > 0 && quantity >= maximum) {
+                    cartStatus.textContent = `此商品最多可購買 ${maximum} 件。`;
+                    cartStatus.hidden = false;
+                    return;
+                }
+                item.quantity = quantity + 1;
+            }
+        }
+
+        localStorage.setItem(`webui-cart-items:${currentUser.id}`, JSON.stringify(cart));
+        document.dispatchEvent(new Event("cart:updated"));
+        cartStatus.textContent = action === "remove" ? "已刪除購物車品項。" : "";
+        cartStatus.hidden = cartStatus.textContent.length === 0;
+        renderCart();
+    } catch (error) {
+        cartStatus.textContent = error.message || "更新購物車失敗，請稍後再試。";
+        cartStatus.hidden = false;
+    }
+}
+
+function renderCheckoutSummary(items) {
+    checkoutSummary.replaceChildren();
+    const total = items.reduce((sum, item) => sum + Number(item.price) * Number(item.quantity), 0);
+    items.forEach(item => {
+        const row = document.createElement("li");
+        const name = document.createElement("span");
+        name.textContent = `${item.title}${item.variantName ? `（${item.variantName}）` : ""} × ${item.quantity}`;
+        const price = document.createElement("strong");
+        price.textContent = `$${(Number(item.price) * Number(item.quantity)).toLocaleString("zh-TW")}`;
+        row.append(name, price);
+        checkoutSummary.append(row);
+    });
+    checkoutTotal.textContent = `商品小計 $${total.toLocaleString("zh-TW")}`;
+}
+
+function openCheckout() {
+    try {
+        const cart = readCart();
+        if (cart.length === 0) {
+            throw new Error("購物車目前沒有商品。");
+        }
+
+        renderCheckoutSummary(cart);
+        checkoutForm.reset();
+        checkoutForm.elements.namedItem("buyerName").value = currentUser?.name || "";
+        checkoutForm.elements.namedItem("recipientName").value = currentUser?.name || "";
+        checkoutForm.elements.namedItem("email").value = currentUser?.email || "";
+        checkoutForm.hidden = false;
+        checkoutSuccess.hidden = true;
+        checkoutError.hidden = true;
+        updateCheckoutLocation();
+        if (cartDialog.open) {
+            cartDialog.close();
+        }
+        checkoutDialog.showModal();
+    } catch (error) {
+        showProductMessage(error.message);
+        if (!cartDialog.open && !detailDialog.open) {
+            detailDialog.showModal();
+        }
+    }
+}
+
+function updateCheckoutLocation() {
+    const isHomeDelivery = checkoutMethod.value === "home";
+    checkoutLocation.hidden = isHomeDelivery;
+    checkoutAddress.hidden = !isHomeDelivery;
+    checkoutForm.elements.namedItem("storeName").required = !isHomeDelivery;
+    checkoutForm.elements.namedItem("address").required = isHomeDelivery;
+}
+
+function submitDemoOrder(event) {
+    event.preventDefault();
+    checkoutError.hidden = true;
+    updateCheckoutLocation();
+    if (!checkoutForm.reportValidity()) {
+        return;
+    }
+
+    const submitButton = checkoutForm.querySelector('[type="submit"]');
+    submitButton.disabled = true;
+    try {
+        const items = readCart();
+        if (!items.length) {
+            throw new Error("購物車目前沒有商品，請回到商品頁重新選購。");
+        }
+
+        const formData = new FormData(checkoutForm);
+        const createdAt = new Date().toISOString();
+        const orderId = `D-${Date.now().toString(36).toUpperCase()}`;
+        const methodLabels = {
+            "711": "7-ELEVEN 店到店",
+            shopee: "蝦皮店到店",
+            home: "宅配到府"
+        };
+        const isHomeDelivery = formData.get("pickupMethod") === "home";
+        const location = isHomeDelivery
+            ? String(formData.get("address")).trim()
+            : `${String(formData.get("storeName")).trim()}${formData.get("storeCode") ? `（${String(formData.get("storeCode")).trim()}）` : ""}`;
+        const total = items.reduce((sum, item) => sum + Number(item.price) * Number(item.quantity), 0);
+        const firstGroupBuy = items[0].groupBuy || {};
+        const order = {
+            id: orderId,
+            status: "demo",
+            createdAt,
+            items: items.map(item => ({
+                name: item.title,
+                spec: item.variantName || "一般規格",
+                quantity: Number(item.quantity),
+                price: Number(item.price) * Number(item.quantity),
+                tone: item.tone || ""
+            })),
+            total,
+            recipient: {
+                buyerName: String(formData.get("buyerName")).trim(),
+                name: String(formData.get("recipientName")).trim(),
+                email: String(formData.get("email")).trim(),
+                phone: String(formData.get("phone")).trim(),
+                method: methodLabels[formData.get("pickupMethod")],
+                address: location,
+                storeName: isHomeDelivery ? "" : String(formData.get("storeName")).trim(),
+                storeCode: isHomeDelivery ? "" : String(formData.get("storeCode")).trim()
+            },
+            groupBuy: {
+                paid: Number(firstGroupBuy.paidQuantity || 0),
+                minimum: Number(firstGroupBuy.minimumQuantity || 0),
+                deadline: firstGroupBuy.deadline || ""
+            },
+            timeline: [
+                { label: "建立示範訂單", complete: true, at: createdAt },
+                { label: "付款（未串接）", complete: false },
+                { label: "成團", complete: false },
+                { label: "出貨", complete: false },
+                { label: "完成", complete: false }
+            ]
+        };
+
+        saveOrder(currentUser.id, order);
+        localStorage.removeItem(`webui-cart-items:${currentUser.id}`);
+        document.dispatchEvent(new Event("cart:updated"));
+        checkoutDialog.querySelector(".checkout-success__detail").href =
+            `order-detail.html?id=${encodeURIComponent(order.id)}`;
+        checkoutDialog.querySelector(".checkout-success__message").textContent =
+            `訂單編號 ${order.id}。這是示範流程，尚未付款，也不會扣款。`;
+        checkoutForm.hidden = true;
+        checkoutSuccess.hidden = false;
+    } catch (error) {
+        checkoutError.textContent = error.message || "建立示範訂單失敗，請稍後再試。";
+        checkoutError.hidden = false;
+    } finally {
+        submitButton.disabled = false;
+    }
 }
 
 function openCart() {
     try {
+        cartStatus.textContent = "";
+        cartStatus.hidden = true;
         renderCart();
         cartDialog.showModal();
     } catch (error) {
@@ -537,6 +822,10 @@ function addActiveProductToCart(openCartAfterAdd = false) {
         }
         if (currentItem) {
             currentItem.quantity = Number(currentItem.quantity) + quantity;
+            currentItem.groupBuy = {
+                ...currentItem.groupBuy,
+                availableQuantity: available
+            };
         } else {
             cart.push({
                 id: itemId,
@@ -544,17 +833,25 @@ function addActiveProductToCart(openCartAfterAdd = false) {
                 variantName: variant?.name || "",
                 price: Number(variant?.price || 0),
                 quantity,
-                image: activeProduct.images?.[0] || ""
+                image: activeProduct.images?.[0] || "",
+                tone: activeProduct.tone || "",
+                groupBuy: {
+                    id: activeProduct.id,
+                    minimumQuantity: Number(activeProduct.minimumQuantity || 0),
+                    paidQuantity: Number(activeProduct.paidQuantity || 0),
+                    deadline: activeProduct.deadline || "",
+                    availableQuantity: available
+                }
             });
         }
         localStorage.setItem(`webui-cart-items:${currentUser.id}`, JSON.stringify(cart));
         document.dispatchEvent(new Event("cart:updated"));
         showProductMessage(openCartAfterAdd
-            ? "商品已加入購物車，以下為本次立即購買項目。"
+            ? "商品已加入購物車，請填寫購買與收件資訊。"
             : "已加入購物車。");
         if (openCartAfterAdd) {
             detailDialog.close();
-            openCart();
+            openCheckout();
         }
     } catch (error) {
         showProductMessage(error.message || "無法儲存購物車，請稍後再試。");
@@ -615,8 +912,20 @@ document.addEventListener("auth:load-failed", event => {
 
 detailDialog.querySelector(".product-dialog__close").addEventListener("click", () => detailDialog.close());
 cartDialog.querySelector(".product-dialog__close").addEventListener("click", () => cartDialog.close());
+checkoutDialog.querySelector(".product-dialog__close").addEventListener("click", () => checkoutDialog.close());
+cartItems.addEventListener("click", event => {
+    const actionButton = event.target.closest("[data-cart-action]");
+    const row = actionButton?.closest("[data-cart-item-id]");
+    if (actionButton && row) {
+        updateCartItem(actionButton.dataset.cartAction, row.dataset.cartItemId);
+    }
+});
 addButton.addEventListener("click", () => requestAuthenticatedAction("add"));
 buyButton.addEventListener("click", () => requestAuthenticatedAction("buy"));
+cartCheckoutButton.addEventListener("click", openCheckout);
+checkoutMethod.addEventListener("change", updateCheckoutLocation);
+checkoutForm.addEventListener("submit", submitDemoOrder);
+checkoutSuccess.querySelector(".checkout-success__close").addEventListener("click", () => checkoutDialog.close());
 variantChoices.addEventListener("click", event => {
     const choice = event.target.closest("[data-variant-index]");
     if (choice) {

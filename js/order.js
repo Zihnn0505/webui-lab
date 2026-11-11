@@ -1,4 +1,4 @@
-import { orders, formatOrderDate, orderStatuses } from "./order-data.js";
+import { getOrders, formatOrderDate, orderStatuses } from "./order-data.js";
 
 const orderList = document.querySelector("#order-list");
 const endedOrderList = document.querySelector("#ended-order-list");
@@ -12,6 +12,8 @@ const emptyState = document.querySelector(".order-empty");
 const loadMoreButton = document.querySelector(".order-load-more");
 const pageSize = 10;
 
+let orders = [];
+let ordersLoadError = "";
 let activeFilter = "all";
 let visibleCount = pageSize;
 
@@ -52,6 +54,9 @@ function renderOrderItem(item, status) {
 }
 
 function getStatusLine(order) {
+    if (order.status === "demo") {
+        return { text: "示範訂單尚未付款；此網站不會扣款。" };
+    }
     if (order.status === "unpaid") {
         const dueDate = new Date(order.paymentDue);
         const remainingMs = dueDate.getTime() - Date.now();
@@ -122,6 +127,7 @@ function renderOrderCard(order) {
     foot.append(createElement("p", "order-card__total", `總計 $${Number(order.total).toLocaleString("zh-TW")}`));
     const actions = createElement("div", "order-actions");
     const primaryLabels = {
+        demo: "查看訂單",
         unpaid: "去付款",
         waiting: "查看團購",
         shipped: "確認收貨",
@@ -202,6 +208,7 @@ function renderOrders() {
     if (!hasResults) {
         const emptyMessages = {
             all: "目前還沒有訂單。",
+            demo: "目前沒有示範訂單。",
             actionable: "目前沒有需要處理的訂單。",
             unpaid: "目前沒有待付款的訂單。",
             waiting: "目前沒有待成團的訂單。",
@@ -210,12 +217,25 @@ function renderOrders() {
             done: "目前沒有已完成的訂單。",
             cancelled: "目前沒有已取消或已退款的訂單。"
         };
-        emptyState.querySelector("p").textContent = emptyMessages[activeFilter] || "目前沒有符合條件的訂單。";
+        emptyState.querySelector("p").textContent = ordersLoadError
+            || emptyMessages[activeFilter]
+            || "目前沒有符合條件的訂單。";
     }
     loadMoreButton.hidden = activeFilter === "cancelled"
         ? cancelledMatches.length <= visibleCount
         : filteredOrders.length <= visibleCount;
 }
+
+document.addEventListener("auth:user-changed", event => {
+    try {
+        orders = getOrders(event.detail.user?.id);
+        ordersLoadError = "";
+    } catch (error) {
+        orders = [];
+        ordersLoadError = error.message;
+    }
+    renderOrders();
+});
 
 filterButtons.forEach(button => {
     button.addEventListener("click", () => setActiveFilter(button.dataset.filter));

@@ -54,5 +54,39 @@
     "createdAt": "2026-10-28T06:05:51.700Z",
     "paidQuantity": 0,
     "reservedQuantity": 0
+  },
+  {
+    "id": "acdac51b-4039-4c8a-a08e-576adb79b946",
+    "groupNumber": "GB-20261104-43C1A48C",
+    "title": "Iphone 18 Duo 256GB",
+    "category": "3C家電",
+    "description": "",
+    "images": [
+      "api/group-buys/images/55169b22-4d32-487d-8136-72c2fad59184-c1a40934-c502-44ea-869f-e86b76d39f67.webp",
+      "api/group-buys/images/55169b22-4d32-487d-8136-72c2fad59184-044d1ed1-0f7d-448e-ac6c-573bdf8122d4.webp"
+    ],
+    "variants": [
+      {
+        "name": "夜空色",
+        "price": 69900,
+        "stock": 80
+      },
+      {
+        "name": "星光白色",
+        "price": 69900,
+        "stock": 80
+      }
+    ],
+    "inventory": 160,
+    "minimumQuantity": 100,
+    "deadline": "2026-12-25T12:00:00.000Z",
+    "estimatedShipDate": "2027-01-01",
+    "limitPerBuyer": 1,
+    "shippingFee": null,
+    "shippingMethod": null,
+    "sellerId": "55169b22-4d32-487d-8136-72c2fad59184",
+    "createdAt": "2026-11-04T06:25:46.558Z",
+    "paidQuantity": 0,
+    "reservedQuantity": 0
   }
 ]

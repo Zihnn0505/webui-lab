@@ -1,8 +1,8 @@
-import { orders, formatOrderDate, orderStatuses } from "./order-data.js";
+import { getOrders, formatOrderDate, orderStatuses } from "./order-data.js";
 
 const detailRoot = document.querySelector("#order-detail-content");
 const orderId = new URLSearchParams(window.location.search).get("id");
-const order = orders.find(item => item.id === orderId);
+let order;
 
 function createElement(tag, className, text) {
     const element = document.createElement(tag);
@@ -85,10 +85,13 @@ function renderOrderDetail() {
     shipping.append(createElement("h2", "", "收件資訊"));
     const address = createElement("dl", "order-detail__shipping");
     [
+        ["購買人", order.recipient.buyerName],
         ["收件人", order.recipient.name],
+        ["Email", order.recipient.email],
         ["聯絡電話", order.recipient.phone],
+        ["取貨方式", order.recipient.method],
         ["收件地址", order.recipient.address]
-    ].forEach(([label, value]) => {
+    ].filter(([, value]) => value).forEach(([label, value]) => {
         address.append(createElement("dt", "", label), createElement("dd", "", value));
     });
     shipping.append(address);
@@ -99,6 +102,8 @@ function renderOrderDetail() {
     }
     if (order.status === "unpaid") {
         shipping.append(createElement("p", "order-detail__notice", `請於 ${formatOrderDate(order.paymentDue)} 前完成付款。付款功能尚未串接。`));
+    } else if (order.status === "demo") {
+        shipping.append(createElement("p", "order-detail__notice", "這是示範訂單，尚未付款，也不會扣款。"));
     } else if (order.status === "cancelled") {
         shipping.append(createElement("p", "order-detail__notice", `${order.cancelReason}，退款日期 ${formatOrderDate(order.refundedAt)}。`));
     }
@@ -110,8 +115,18 @@ function renderOrderDetail() {
     detailRoot.replaceChildren(header, layout);
 }
 
-if (order) {
-    renderOrderDetail();
-} else {
-    renderMissingOrder();
-}
+document.addEventListener("auth:user-changed", event => {
+    try {
+        order = getOrders(event.detail.user?.id).find(item => item.id === orderId);
+    } catch (error) {
+        renderMissingOrder();
+        detailRoot.firstElementChild.querySelector("p").textContent = error.message;
+        return;
+    }
+
+    if (order) {
+        renderOrderDetail();
+    } else {
+        renderMissingOrder();
+    }
+});
