@@ -1,9 +1,15 @@
+import { getGroupBuyProgress, updateGroupBuyProgressBar } from "./group-buy-progress.js";
+
 const createGroupButton = document.querySelector("#create-group-button");
 const groupList = document.querySelector("#seller-group-list");
 const groupCount = document.querySelector("#groups-title")?.parentElement.querySelector(".seller-section__sub strong");
 const groupStatus = document.querySelector("#seller-group-status");
 const groupFilterButtons = document.querySelectorAll(".seller-section [data-filter]");
+const sellerOrderList = document.querySelector("#seller-order-list");
+const sellerOrderCount = document.querySelector("[data-seller-order-count]");
+const sellerOrderStatus = document.querySelector("#seller-order-status");
 let sellerGroupBuys = [];
+let sellerOrders = [];
 const statusLabels = {
     open: ["募集中", "seller-badge--open"],
     soon: ["即將截止", "seller-badge--soon"],
@@ -21,10 +27,27 @@ function showGroupStatus(message, isError = false) {
     groupStatus.classList.toggle("group-form__message", isError);
 }
 
+function showSellerOrderStatus(message, isError = false) {
+    if (!sellerOrderStatus) {
+        return;
+    }
+    sellerOrderStatus.textContent = message;
+    sellerOrderStatus.hidden = message.length === 0;
+    sellerOrderStatus.classList.toggle("group-form__message", isError);
+}
+
 async function readGroupBuyResponse(response) {
     const result = await response.json().catch(() => ({}));
     if (!response.ok) {
         throw new Error(result.error || `團購請求失敗（${response.status}）。`);
+    }
+    return result;
+}
+
+async function readSellerOrderResponse(response) {
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok) {
+        throw new Error(result.error || `訂單請求失敗（${response.status}）。`);
     }
     return result;
 }
@@ -39,6 +62,114 @@ function createCell(label, className = "") {
         cell.className = className;
     }
     return cell;
+}
+
+function renderSellerOrder(order, item) {
+    const row = document.createElement("tr");
+    row.setAttribute("role", "row");
+    row.dataset.orderId = order.id;
+    row.dataset.groupBuyId = item.groupBuyId;
+
+    const orderCell = createCell("訂單編號");
+    orderCell.textContent = order.id;
+    row.append(orderCell);
+
+    const buyerCell = createCell("買家");
+    buyerCell.textContent = order.buyerName || order.recipient.buyerName;
+    row.append(buyerCell);
+
+    const recipientCell = createCell("收件資訊");
+    recipientCell.textContent = `${order.recipient.name}・${order.recipient.phone}・${order.recipient.address}`;
+    row.append(recipientCell);
+
+    const productCell = createCell("商品／規格");
+    productCell.textContent = `${item.name}・${item.spec}`;
+    row.append(productCell);
+
+    const quantityCell = createCell("數量");
+    quantityCell.textContent = `${item.quantity} 件`;
+    row.append(quantityCell);
+
+    const amountCell = createCell("金額");
+    amountCell.textContent = `$${Number(item.price).toLocaleString("zh-TW")}`;
+    row.append(amountCell);
+
+    const statusCell = createCell("訂單狀態");
+    statusCell.textContent = item.shippedAt ? "已出貨" : "待出貨";
+    row.append(statusCell);
+
+    const actionsCell = createCell("操作");
+    if (item.shippedAt) {
+        actionsCell.textContent = "—";
+    } else {
+        const shipButton = document.createElement("button");
+        shipButton.className = "seller-action";
+        shipButton.type = "button";
+        shipButton.textContent = "標記已出貨";
+        shipButton.addEventListener("click", () => shipSellerOrder(order, item, shipButton));
+        actionsCell.append(shipButton);
+    }
+    row.append(actionsCell);
+    return row;
+}
+
+function renderEmptySellerOrderRow(message) {
+    const row = document.createElement("tr");
+    row.setAttribute("role", "row");
+    const cell = createCell("");
+    cell.colSpan = 8;
+    cell.textContent = message;
+    row.append(cell);
+    return row;
+}
+
+async function loadSellerOrders() {
+    if (!sellerOrderList) {
+        return;
+    }
+
+    showSellerOrderStatus("");
+    try {
+        const result = await readSellerOrderResponse(await fetch("api/orders/seller", { cache: "no-store" }));
+        if (!Array.isArray(result.orders)) {
+            throw new Error("賣家訂單回應格式不正確。");
+        }
+        sellerOrders = result.orders;
+        const rows = sellerOrders.flatMap(order => order.items.map(item => renderSellerOrder(order, item)));
+        sellerOrderList.replaceChildren(...(rows.length ? rows : [renderEmptySellerOrderRow("目前沒有已成團的訂單。")]));
+        if (sellerOrderCount) {
+            sellerOrderCount.textContent = String(new Set(sellerOrders.map(order => order.id)).size);
+        }
+        document.querySelector('[data-seller-stat="shipping"]').textContent = String(
+            sellerOrders.filter(order => order.items.some(item => !item.shippedAt)).length
+        );
+    } catch (error) {
+        sellerOrders = [];
+        sellerOrderList.replaceChildren(renderEmptySellerOrderRow("訂單載入失敗。"));
+        if (sellerOrderCount) {
+            sellerOrderCount.textContent = "0";
+        }
+        document.querySelector('[data-seller-stat="shipping"]').textContent = "0";
+        showSellerOrderStatus(error.message, true);
+    }
+}
+
+async function shipSellerOrder(order, item, button) {
+    button.disabled = true;
+    button.textContent = "更新中…";
+    try {
+        await readSellerOrderResponse(await fetch(`api/orders/${encodeURIComponent(order.id)}/shipment`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ groupBuyId: item.groupBuyId })
+        }));
+        await loadSellerOrders();
+        showSellerOrderStatus(`訂單 ${order.id} 已標記出貨。`);
+    } catch (error) {
+        button.disabled = false;
+        button.textContent = "標記已出貨";
+        showSellerOrderStatus(error.message, true);
+    }
 }
 
 function renderGroupBuy(groupBuy) {
@@ -79,17 +210,12 @@ function renderGroupBuy(groupBuy) {
     const progressBody = document.createElement("div");
     progressBody.className = "seller-cell__body";
     const progress = document.createElement("div");
-    const progressPercent = Math.min(100, Math.floor(groupBuy.paidQuantity / groupBuy.minimumQuantity * 100));
     progress.className = "progress";
-    progress.style.setProperty("--value", String(progressPercent));
-    progress.setAttribute("role", "progressbar");
-    progress.setAttribute("aria-label", "成團進度");
-    progress.setAttribute("aria-valuenow", String(progressPercent));
-    progress.setAttribute("aria-valuemin", "0");
-    progress.setAttribute("aria-valuemax", "100");
+    const progressDetails = getGroupBuyProgress(groupBuy.paidQuantity, groupBuy.minimumQuantity);
+    updateGroupBuyProgressBar(progress, progressDetails);
     const progressText = document.createElement("span");
     progressText.className = "seller-cell__sub";
-    progressText.textContent = `已付款 ${groupBuy.paidQuantity}／最低 ${groupBuy.minimumQuantity}`;
+    progressText.textContent = progressDetails.summary;
     progressBody.append(progress, progressText);
     progressCell.append(progressBody);
     row.append(progressCell);
@@ -624,19 +750,33 @@ function initializeSellerPage() {
     });
 
     loadGroupBuys();
+    loadSellerOrders();
 }
 
 document.addEventListener("aside:ready", initializeSellerPage);
+document.addEventListener("group-buy-progress:updated", () => {
+    if (createGroupButton) {
+        loadGroupBuys();
+        loadSellerOrders();
+    }
+});
 document.addEventListener("auth:user-changed", event => {
     if (createGroupButton && !event.detail.user) {
         sellerGroupBuys = [];
         groupList?.replaceChildren();
         updateGroupCount();
         updateSellerStats(sellerGroupBuys);
+        sellerOrders = [];
+        sellerOrderList?.replaceChildren(renderEmptySellerOrderRow("請先登入查看訂單。"));
+        if (sellerOrderCount) {
+            sellerOrderCount.textContent = "0";
+        }
+        document.querySelector('[data-seller-stat="shipping"]').textContent = "0";
         return;
     }
     if (createGroupButton && event.detail.user) {
         loadGroupBuys();
+        loadSellerOrders();
     }
 });
 if (document.querySelector("#setting-modal")) {

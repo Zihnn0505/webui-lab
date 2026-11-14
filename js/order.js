@@ -1,4 +1,5 @@
-import { getOrders, formatOrderDate, orderStatuses } from "./order-data.js";
+import { fetchOrders, getOrders, formatOrderDate, orderStatuses } from "./order-data.js";
+import { getGroupBuyProgress } from "./group-buy-progress.js";
 
 const orderList = document.querySelector("#order-list");
 const endedOrderList = document.querySelector("#ended-order-list");
@@ -8,6 +9,7 @@ const totalCount = document.querySelector("[data-order-total]");
 const filterButtons = Array.from(document.querySelectorAll("[data-filter]"));
 const reminder = document.querySelector(".order-reminder");
 const reminderText = document.querySelector(".order-reminder__text");
+const loadStatus = document.querySelector("#order-load-status");
 const emptyState = document.querySelector(".order-empty");
 const loadMoreButton = document.querySelector(".order-load-more");
 const pageSize = 10;
@@ -16,6 +18,11 @@ let orders = [];
 let ordersLoadError = "";
 let activeFilter = "all";
 let visibleCount = pageSize;
+
+function showLoadStatus(message) {
+    loadStatus.textContent = message;
+    loadStatus.hidden = message.length === 0;
+}
 
 function createElement(tag, className, text) {
     const element = document.createElement(tag);
@@ -33,7 +40,7 @@ function detailUrl(order) {
 }
 
 function orderNeedsAction(order) {
-    return order.status === "unpaid" || order.status === "shipped";
+    return order.status === "shipped";
 }
 
 function renderOrderItem(item, status) {
@@ -54,33 +61,18 @@ function renderOrderItem(item, status) {
 }
 
 function getStatusLine(order) {
-    if (order.status === "demo") {
-        return { text: "示範訂單尚未付款；此網站不會扣款。" };
-    }
-    if (order.status === "unpaid") {
-        const dueDate = new Date(order.paymentDue);
-        const remainingMs = dueDate.getTime() - Date.now();
-        let remaining = "已逾期";
-        if (remainingMs > 0) {
-            const minutes = Math.ceil(remainingMs / (60 * 1000));
-            remaining = minutes >= 60
-                ? `剩 ${Math.ceil(minutes / 60)} 小時`
-                : `剩 ${minutes} 分鐘`;
-        }
-        return { text: `付款期限 ${formatOrderDate(order.paymentDue)}（${remaining}）`, urgent: true };
-    }
     if (order.status === "waiting") {
-        const percentage = Math.min(100, Math.floor(order.groupBuy.paid / order.groupBuy.minimum * 100));
+        const progress = getGroupBuyProgress(order.groupBuy.paid, order.groupBuy.minimum);
         return {
-            progress: percentage,
-            text: `已付款 ${order.groupBuy.paid}／最低 ${order.groupBuy.minimum} 件・${formatOrderDate(order.groupBuy.deadline)} 截止`
+            progress: progress.percentage,
+            text: `${progress.summary} 件・${formatOrderDate(order.groupBuy.deadline)} 截止`
         };
     }
     if (order.status === "preparing") {
-        return { text: `賣家準備中・${order.estimatedShipping}` };
+        return { text: `賣家準備中・${order.estimatedShipping || "等待賣家出貨"}` };
     }
     if (order.status === "shipped") {
-        return { text: `${order.shipment.carrier}・物流單號 ${order.shipment.trackingNumber}` };
+        return { text: `賣家已於 ${formatOrderDate(order.shipment?.shippedAt)} 出貨` };
     }
     if (order.status === "done") {
         return { text: `${formatOrderDate(order.completedAt).slice(0, 10)} 完成` };
@@ -127,8 +119,6 @@ function renderOrderCard(order) {
     foot.append(createElement("p", "order-card__total", `總計 $${Number(order.total).toLocaleString("zh-TW")}`));
     const actions = createElement("div", "order-actions");
     const primaryLabels = {
-        demo: "查看訂單",
-        unpaid: "去付款",
         waiting: "查看團購",
         shipped: "確認收貨",
         done: "填寫評價"
@@ -208,9 +198,7 @@ function renderOrders() {
     if (!hasResults) {
         const emptyMessages = {
             all: "目前還沒有訂單。",
-            demo: "目前沒有示範訂單。",
             actionable: "目前沒有需要處理的訂單。",
-            unpaid: "目前沒有待付款的訂單。",
             waiting: "目前沒有待成團的訂單。",
             preparing: "目前沒有準備出貨的訂單。",
             shipped: "目前沒有已出貨的訂單。",
@@ -226,13 +214,45 @@ function renderOrders() {
         : filteredOrders.length <= visibleCount;
 }
 
-function loadUserOrders(user) {
-    try {
-        orders = getOrders(user?.id);
-        ordersLoadError = "";
-    } catch (error) {
+async function loadUserOrders(user) {
+    const userId = user?.id;
+    if (!userId) {
         orders = [];
-        ordersLoadError = error.message;
+        ordersLoadError = "";
+        showLoadStatus("");
+        renderOrders();
+        return;
+    }
+
+    try {
+        const remoteOrders = await fetchOrders();
+        orders = remoteOrders;
+        try {
+            const remoteOrderIds = new Set(remoteOrders.map(order => order.id));
+            const legacyOrders = getOrders(userId).filter(order =>
+                !["demo", "unpaid"].includes(order.status) && !remoteOrderIds.has(order.id));
+            orders.push(...legacyOrders);
+            ordersLoadError = "";
+            showLoadStatus("");
+        } catch (storageError) {
+            ordersLoadError = `無法讀取本機舊訂單：${storageError.message}`;
+            showLoadStatus(ordersLoadError);
+        }
+    } catch (error) {
+        let storageError;
+        try {
+            orders = getOrders(userId).filter(order => !["demo", "unpaid"].includes(order.status));
+        } catch (localError) {
+            orders = [];
+            storageError = localError;
+        }
+        ordersLoadError = storageError
+            ? `${error.message} 本機舊訂單也無法讀取：${storageError.message}`
+            : error.message;
+        showLoadStatus(`無法同步伺服器訂單：${ordersLoadError}`);
+    }
+    if (window.authState?.user?.id !== userId) {
+        return;
     }
     renderOrders();
 }
@@ -241,6 +261,7 @@ document.addEventListener("auth:user-changed", event => loadUserOrders(event.det
 document.addEventListener("auth:load-failed", event => {
     orders = [];
     ordersLoadError = `無法確認登入狀態：${event.detail.error}`;
+    showLoadStatus(ordersLoadError);
     renderOrders();
 });
 
@@ -259,6 +280,14 @@ reminder.addEventListener("click", () => {
 loadMoreButton.addEventListener("click", () => {
     visibleCount += pageSize;
     renderOrders();
+});
+
+document.addEventListener("orders:updated", () => loadUserOrders(window.authState?.user));
+document.addEventListener("group-buy-progress:updated", () => loadUserOrders(window.authState?.user));
+window.addEventListener("focus", () => {
+    if (window.authState?.ready && window.authState.user) {
+        loadUserOrders(window.authState.user);
+    }
 });
 
 renderOrders();

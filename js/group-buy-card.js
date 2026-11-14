@@ -1,3 +1,5 @@
+import { getGroupBuyProgress, updateGroupBuyProgressBar } from "./group-buy-progress.js";
+
 const categories = new Map([
     ["食品飲料", "food"],
     ["food", "food"],
@@ -33,9 +35,7 @@ export function createGroupBuyCard(groupBuy) {
     const minimumQuantity = Number(groupBuy.minimumQuantity) || 0;
     const remainingQuantity = Number(groupBuy.remainingQuantity ?? inventory - paidQuantity - reservedQuantity);
     const price = Number(variants[0]?.price) || 0;
-    const progressValue = minimumQuantity > 0
-        ? Math.min(100, Math.floor(paidQuantity / minimumQuantity * 100))
-        : 0;
+    const progressDetails = getGroupBuyProgress(paidQuantity, minimumQuantity);
 
     const card = document.createElement("li");
     card.className = "card";
@@ -82,16 +82,11 @@ export function createGroupBuyCard(groupBuy) {
 
     const progress = document.createElement("div");
     progress.className = "progress";
-    progress.style.setProperty("--value", String(progressValue));
-    progress.setAttribute("role", "progressbar");
-    progress.setAttribute("aria-label", "成團進度");
-    progress.setAttribute("aria-valuenow", String(progressValue));
-    progress.setAttribute("aria-valuemin", "0");
-    progress.setAttribute("aria-valuemax", "100");
+    updateGroupBuyProgressBar(progress, progressDetails);
 
     const progressText = document.createElement("p");
     progressText.className = "card__meta";
-    progressText.textContent = `已付款 ${paidQuantity}／最低 ${minimumQuantity}`;
+    progressText.textContent = progressDetails.summary;
 
     const footer = document.createElement("p");
     footer.className = "card__foot";

@@ -72,6 +72,7 @@
                     <h1 class="page-title">我的訂單</h1>
                     <p class="result-count" aria-live="polite">共 <strong data-order-total>0</strong> 筆訂單</p>
                 </div>
+                <p id="order-load-status" role="status" aria-live="polite" hidden></p>
 
                 <button class="order-reminder" type="button" hidden>
                     <span class="order-reminder__text"></span>
@@ -81,8 +82,6 @@
                 <nav class="order-filter" aria-label="依訂單狀態篩選">
                     <ul class="chips">
                         <li><button type="button" class="chip is-active" data-filter="all" aria-pressed="true">全部 <span data-filter-count></span></button></li>
-                        <li><button type="button" class="chip" data-filter="demo" aria-pressed="false">示範訂單 <span data-filter-count></span></button></li>
-                        <li><button type="button" class="chip" data-filter="unpaid" aria-pressed="false">待付款 <span data-filter-count></span></button></li>
                         <li><button type="button" class="chip" data-filter="waiting" aria-pressed="false">待成團 <span data-filter-count></span></button></li>
                         <li><button type="button" class="chip" data-filter="preparing" aria-pressed="false">準備出貨 <span data-filter-count></span></button></li>
                         <li><button type="button" class="chip" data-filter="shipped" aria-pressed="false">已出貨 <span data-filter-count></span></button></li>

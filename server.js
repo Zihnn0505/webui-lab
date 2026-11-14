@@ -12,6 +12,7 @@ const projectDirectory = path.dirname(fileURLToPath(import.meta.url));
 const dataDirectory = path.join(projectDirectory, "data");
 const usersFile = path.join(dataDirectory, "users.json");
 const groupBuysFile = path.join(dataDirectory, "group-buys.json");
+const ordersFile = path.join(dataDirectory, "orders.json");
 const configFile = path.join(projectDirectory, "config.json");
 const groupBuyImagesDirectory = path.join(dataDirectory, "group-buy-images");
 const sessionSecret = process.env.SESSION_SECRET ?? "";
@@ -31,6 +32,7 @@ if (!Number.isInteger(port) || port < 1 || port > 65535) {
 const app = express();
 let userWriteQueue = Promise.resolve();
 let groupBuyWriteQueue = Promise.resolve();
+let orderWriteQueue = Promise.resolve();
 const dummyPasswordSalt = randomBytes(16).toString("hex");
 const dummyPasswordHash = await scrypt("not-a-real-password", dummyPasswordSalt, passwordLength);
 let sellerAccessEmails;
@@ -258,6 +260,58 @@ function updateGroupBuys(update) {
     return operation;
 }
 
+async function readOrders() {
+    let contents;
+    try {
+        contents = await fs.readFile(ordersFile, "utf8");
+    } catch (error) {
+        if (error.code !== "ENOENT") {
+            throw error;
+        }
+
+        await fs.mkdir(dataDirectory, { recursive: true });
+        try {
+            await fs.writeFile(ordersFile, "[]\n", { encoding: "utf8", flag: "wx" });
+        } catch (createError) {
+            if (createError.code !== "EEXIST") {
+                throw createError;
+            }
+        }
+        contents = await fs.readFile(ordersFile, "utf8");
+    }
+
+    const orders = JSON.parse(contents);
+    if (!Array.isArray(orders)) {
+        throw new Error("data/orders.json must contain a JSON array.");
+    }
+    return orders;
+}
+
+async function writeOrders(orders) {
+    await fs.mkdir(dataDirectory, { recursive: true });
+    const temporaryFile = `${ordersFile}.${process.pid}.${randomUUID()}.tmp`;
+    await fs.writeFile(temporaryFile, `${JSON.stringify(orders, null, 2)}\n`, "utf8");
+
+    try {
+        await fs.rename(temporaryFile, ordersFile);
+    } catch (error) {
+        await fs.rm(temporaryFile, { force: true });
+        throw error;
+    }
+}
+
+function updateOrders(update) {
+    const operation = orderWriteQueue.then(async () => {
+        const orders = await readOrders();
+        const result = update(orders);
+        await writeOrders(orders);
+        return result;
+    });
+
+    orderWriteQueue = operation.then(() => undefined, () => undefined);
+    return operation;
+}
+
 function groupBuyStatus(groupBuy) {
     const remainingQuantity = groupBuy.inventory - groupBuy.paidQuantity - groupBuy.reservedQuantity;
     if (remainingQuantity <= 0) {
@@ -282,6 +336,58 @@ function groupBuyWithComputedFields(groupBuy) {
         ...groupBuy,
         remainingQuantity: groupBuy.inventory - groupBuy.paidQuantity - groupBuy.reservedQuantity,
         status: groupBuyStatus(groupBuy)
+    };
+}
+
+function orderWithCurrentStatus(order, groupBuys) {
+    const groupBuysById = new Map(groupBuys.map(groupBuy => [groupBuy.id, groupBuy]));
+    const items = order.items.map(item => {
+        const groupBuy = groupBuysById.get(item.groupBuyId);
+        const paid = Number(groupBuy?.paidQuantity ?? item.groupBuy?.paid ?? 0);
+        const minimum = Number(groupBuy?.minimumQuantity ?? item.groupBuy?.minimum ?? 0);
+        return {
+            ...item,
+            sellerId: groupBuy?.sellerId ?? item.sellerId,
+            status: item.shippedAt ? "shipped" : paid >= minimum ? "preparing" : "waiting",
+            groupBuy: {
+                id: item.groupBuyId,
+                paid,
+                minimum,
+                deadline: groupBuy?.deadline ?? item.groupBuy?.deadline ?? ""
+            }
+        };
+    });
+    const groupGoalReached = items.every(item => item.groupBuy.paid >= item.groupBuy.minimum);
+    const allItemsShipped = items.every(item => item.shippedAt);
+    const status = order.completedAt
+        ? "done"
+        : !groupGoalReached
+            ? "waiting"
+            : allItemsShipped
+                ? "shipped"
+                : "preparing";
+    const firstUnmetGroup = items.find(item => item.groupBuy.paid < item.groupBuy.minimum);
+    const progressItem = firstUnmetGroup ?? items[0];
+    const latestShipment = items
+        .map(item => item.shippedAt)
+        .filter(Boolean)
+        .sort()
+        .at(-1);
+
+    return {
+        ...order,
+        items,
+        status,
+        groupBuy: progressItem?.groupBuy ?? null,
+        shipment: allItemsShipped ? { shippedAt: latestShipment } : null,
+        timeline: [
+            { label: "建立訂單", complete: true, at: order.createdAt },
+            { label: "示範付款完成", complete: true, at: order.createdAt },
+            { label: "達成成團門檻", complete: groupGoalReached, at: order.groupReachedAt ?? "" },
+            { label: "賣家備貨", complete: groupGoalReached, at: order.preparingAt ?? "" },
+            { label: "出貨", complete: allItemsShipped, at: allItemsShipped ? latestShipment : "" },
+            { label: "完成", complete: Boolean(order.completedAt), at: order.completedAt ?? "" }
+        ]
     };
 }
 
@@ -764,6 +870,240 @@ app.get("/api/group-buys", async (_req, res) => {
         groupBuys: groupBuys
             .map(groupBuyWithComputedFields)
     });
+});
+
+app.post("/api/orders", async (req, res) => {
+    const user = await getRequestUser(req);
+    if (!user) {
+        return res.status(401).json({ error: "請先登入再確認付款。" });
+    }
+
+    const requestedItems = req.body?.items;
+    if (!Array.isArray(requestedItems) || requestedItems.length === 0 || requestedItems.length > 50) {
+        return res.status(400).json({ error: "訂單商品資料格式不正確。" });
+    }
+
+    const quantities = new Map();
+    for (const item of requestedItems) {
+        if (!item || typeof item.groupBuyId !== "string" || !item.groupBuyId
+            || typeof item.variantName !== "string" || item.variantName.length > 50
+            || !Number.isSafeInteger(item.quantity) || item.quantity < 1) {
+            return res.status(400).json({ error: "訂單商品或購買數量無效。" });
+        }
+        const key = `${item.groupBuyId}\0${item.variantName}`;
+        quantities.set(key, (quantities.get(key) || 0) + item.quantity);
+    }
+
+    const requestedRecipient = req.body?.recipient;
+    const recipientFields = ["buyerName", "name", "email", "phone", "method", "address"];
+    const recipientMaxLengths = { buyerName: 80, name: 80, email: 254, phone: 15, method: 40, address: 200 };
+    if (!requestedRecipient || typeof requestedRecipient !== "object"
+        || recipientFields.some(field => typeof requestedRecipient[field] !== "string"
+            || !requestedRecipient[field].trim()
+            || requestedRecipient[field].length > recipientMaxLengths[field])) {
+        return res.status(400).json({ error: "收件資訊不完整或格式不正確。" });
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(requestedRecipient.email)) {
+        return res.status(400).json({ error: "請輸入有效的 Email。" });
+    }
+    if (!/^\d{8,15}$/.test(requestedRecipient.phone)) {
+        return res.status(400).json({ error: "聯絡電話需為 8 至 15 位數字。" });
+    }
+    if (!["7-ELEVEN 店到店", "蝦皮店到店", "宅配到府"].includes(requestedRecipient.method)) {
+        return res.status(400).json({ error: "請選擇有效的取貨方式。" });
+    }
+
+    const paymentMethods = {
+        card: "信用卡（示範）",
+        transfer: "ATM 轉帳（示範）"
+    };
+    const paymentMethod = Object.hasOwn(paymentMethods, req.body?.paymentMethod)
+        ? paymentMethods[req.body.paymentMethod]
+        : null;
+    if (!paymentMethod) {
+        return res.status(400).json({ error: "請選擇有效的付款方式。" });
+    }
+
+    const paidGroupBuys = await updateGroupBuys(groupBuys => {
+        const updatesByGroup = new Map();
+        for (const [key, quantity] of quantities) {
+            const [groupBuyId, variantName] = key.split("\0");
+            const groupBuy = groupBuys.find(item => item.id === groupBuyId);
+            if (!groupBuy) {
+                throw Object.assign(new Error("找不到訂單中的團購商品。"), { status: 404 });
+            }
+            const variant = groupBuy.variants.find(item => item.name === variantName);
+            if (!variant) {
+                throw Object.assign(new Error(`「${groupBuy.title}」的商品規格已不存在，請更新購物車後再試。`), { status: 409 });
+            }
+            if (quantity > variant.stock) {
+                throw Object.assign(new Error(`「${groupBuy.title}」的規格庫存不足。`), { status: 409 });
+            }
+
+            const update = updatesByGroup.get(groupBuy.id) ?? { groupBuy, quantity: 0 };
+            update.quantity += quantity;
+            updatesByGroup.set(groupBuy.id, update);
+        }
+
+        for (const { groupBuy, quantity } of updatesByGroup.values()) {
+            const remainingQuantity = groupBuy.inventory - groupBuy.paidQuantity - groupBuy.reservedQuantity;
+            if (groupBuyStatus(groupBuy) === "ended" || remainingQuantity < quantity) {
+                throw Object.assign(new Error(`「${groupBuy.title}」剩餘名額不足或已截止，請更新購物車後再試。`), { status: 409 });
+            }
+            groupBuy.paidQuantity += quantity;
+        }
+        return Array.from(updatesByGroup.values(), ({ groupBuy }) => groupBuyWithComputedFields(groupBuy));
+    });
+
+    const paidGroupBuysById = new Map(paidGroupBuys.map(groupBuy => [groupBuy.id, groupBuy]));
+    const createdAt = new Date().toISOString();
+    const order = {
+        id: `D-${Date.now().toString(36).toUpperCase()}-${randomUUID().slice(0, 8).toUpperCase()}`,
+        buyerId: user.id,
+        buyerName: requestedRecipient.buyerName.trim(),
+        createdAt,
+        paymentMethod,
+        recipient: Object.fromEntries(recipientFields.map(field => [field, requestedRecipient[field].trim()])),
+        items: requestedItems.map(item => {
+            const groupBuy = paidGroupBuysById.get(item.groupBuyId);
+            const variant = groupBuy.variants.find(candidate => candidate.name === item.variantName);
+            return {
+                groupBuyId: groupBuy.id,
+                sellerId: groupBuy.sellerId,
+                name: groupBuy.title,
+                spec: variant.name || "一般規格",
+                quantity: item.quantity,
+                price: variant.price * item.quantity,
+                tone: "",
+                groupBuy: {
+                    id: groupBuy.id,
+                    paid: groupBuy.paidQuantity,
+                    minimum: groupBuy.minimumQuantity,
+                    deadline: groupBuy.deadline
+                },
+                shippedAt: ""
+            };
+        }),
+        completedAt: ""
+    };
+    order.total = order.items.reduce((total, item) => total + item.price, 0);
+    if (order.items.every(item => item.groupBuy.paid >= item.groupBuy.minimum)) {
+        order.groupReachedAt = createdAt;
+        order.preparingAt = createdAt;
+    }
+
+    try {
+        await updateOrders(orders => {
+            orders.unshift(order);
+        });
+    } catch (error) {
+        const quantitiesByGroup = new Map();
+        for (const item of order.items) {
+            quantitiesByGroup.set(item.groupBuyId, (quantitiesByGroup.get(item.groupBuyId) || 0) + item.quantity);
+        }
+        await updateGroupBuys(groupBuys => {
+            for (const [groupBuyId, quantity] of quantitiesByGroup) {
+                const groupBuy = groupBuys.find(item => item.id === groupBuyId);
+                if (groupBuy) {
+                    groupBuy.paidQuantity = Math.max(0, groupBuy.paidQuantity - quantity);
+                }
+            }
+        });
+        throw error;
+    }
+
+    const currentGroupBuys = await readGroupBuys();
+    res.set("Cache-Control", "no-store");
+    return res.status(201).json({ order: orderWithCurrentStatus(order, currentGroupBuys) });
+});
+
+app.get("/api/orders/mine", async (req, res) => {
+    const user = await getRequestUser(req);
+    if (!user) {
+        return res.status(401).json({ error: "請先登入查看訂單。" });
+    }
+
+    const [orders, groupBuys] = await Promise.all([readOrders(), readGroupBuys()]);
+    res.set("Cache-Control", "no-store");
+    return res.json({
+        orders: orders
+            .filter(order => order.buyerId === user.id)
+            .map(order => orderWithCurrentStatus(order, groupBuys))
+    });
+});
+
+app.get("/api/orders/seller", requireSellerAccess, async (req, res) => {
+    const [orders, groupBuys] = await Promise.all([readOrders(), readGroupBuys()]);
+    const sellerOrders = orders
+        .map(order => orderWithCurrentStatus(order, groupBuys))
+        .map(order => ({
+            ...order,
+            items: order.items.filter(item => item.sellerId === req.sellerUser.id
+                && item.groupBuy.paid >= item.groupBuy.minimum)
+        }))
+        .filter(order => order.items.length > 0);
+
+    res.set("Cache-Control", "no-store");
+    return res.json({ orders: sellerOrders });
+});
+
+app.patch("/api/orders/:orderId/shipment", requireSellerAccess, async (req, res) => {
+    const groupBuyId = req.body?.groupBuyId;
+    if (typeof groupBuyId !== "string" || !groupBuyId) {
+        return res.status(400).json({ error: "找不到要出貨的團購商品。" });
+    }
+
+    const groupBuys = await readGroupBuys();
+    const groupBuy = groupBuys.find(item => item.id === groupBuyId
+        && item.sellerId === req.sellerUser.id);
+    if (!groupBuy) {
+        return res.status(404).json({ error: "找不到你管理的團購商品。" });
+    }
+    if (groupBuy.paidQuantity < groupBuy.minimumQuantity) {
+        return res.status(409).json({ error: "此團購尚未達標，暫時不能出貨。" });
+    }
+
+    const shippedAt = new Date().toISOString();
+    const updatedOrder = await updateOrders(orders => {
+        const order = orders.find(item => item.id === req.params.orderId);
+        if (!order || order.items.some(item => item.groupBuyId === groupBuyId
+            && item.sellerId === req.sellerUser.id) === false) {
+            throw Object.assign(new Error("找不到這筆訂單。"), { status: 404 });
+        }
+        order.items.forEach(item => {
+            if (item.groupBuyId === groupBuyId && item.sellerId === req.sellerUser.id && !item.shippedAt) {
+                item.shippedAt = shippedAt;
+            }
+        });
+        return order;
+    });
+
+    res.set("Cache-Control", "no-store");
+    return res.json({ order: orderWithCurrentStatus(updatedOrder, groupBuys) });
+});
+
+app.post("/api/orders/:orderId/complete", async (req, res) => {
+    const user = await getRequestUser(req);
+    if (!user) {
+        return res.status(401).json({ error: "請先登入查看訂單。" });
+    }
+
+    const groupBuys = await readGroupBuys();
+    const completedAt = new Date().toISOString();
+    const updatedOrder = await updateOrders(orders => {
+        const order = orders.find(item => item.id === req.params.orderId && item.buyerId === user.id);
+        if (!order) {
+            throw Object.assign(new Error("找不到這筆訂單。"), { status: 404 });
+        }
+        if (orderWithCurrentStatus(order, groupBuys).status !== "shipped") {
+            throw Object.assign(new Error("訂單出貨後才能確認收貨。"), { status: 409 });
+        }
+        order.completedAt = completedAt;
+        return order;
+    });
+
+    res.set("Cache-Control", "no-store");
+    return res.json({ order: orderWithCurrentStatus(updatedOrder, groupBuys) });
 });
 
 app.get("/api/group-buys/mine", requireSellerAccess, async (req, res) => {

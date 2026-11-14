@@ -72,3 +72,4 @@ categoryButtons.forEach(button => {
 });
 
 loadGroupBuys();
+document.addEventListener("group-buy-progress:updated", loadGroupBuys);

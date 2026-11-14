@@ -1,61 +1,5 @@
 [
   {
-    "id": "6a4dc5de-0394-46ea-9989-d3a7038ebe8f",
-    "groupNumber": "GB-20261020-4DB4ED13",
-    "title": "test",
-    "category": "食品飲料",
-    "description": "",
-    "images": [
-      "api/group-buys/images/55169b22-4d32-487d-8136-72c2fad59184-373112d2-202d-4702-962b-5cd31db74509.jpg"
-    ],
-    "variants": [
-      {
-        "name": "test",
-        "price": 99,
-        "stock": 100
-      }
-    ],
-    "inventory": 100,
-    "minimumQuantity": 1,
-    "deadline": "2026-10-23T10:41:00.000Z",
-    "estimatedShipDate": null,
-    "limitPerBuyer": null,
-    "shippingFee": null,
-    "shippingMethod": null,
-    "sellerId": "55169b22-4d32-487d-8136-72c2fad59184",
-    "createdAt": "2026-10-20T10:42:07.713Z",
-    "paidQuantity": 0,
-    "reservedQuantity": 0
-  },
-  {
-    "id": "bfd6f2e6-9fda-416a-af50-60f9d0617c0d",
-    "groupNumber": "GB-20261028-5DBC9CFD",
-    "title": "test2",
-    "category": "食品飲料",
-    "description": "",
-    "images": [
-      "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTTWM3adwE_YNttdm90oW2cPim_nMRJ8oqaPSy4-KTfBA&s=10"
-    ],
-    "variants": [
-      {
-        "name": "test",
-        "price": 10,
-        "stock": 99
-      }
-    ],
-    "inventory": 99,
-    "minimumQuantity": 10,
-    "deadline": "2026-10-30T05:59:00.000Z",
-    "estimatedShipDate": null,
-    "limitPerBuyer": null,
-    "shippingFee": null,
-    "shippingMethod": null,
-    "sellerId": "55169b22-4d32-487d-8136-72c2fad59184",
-    "createdAt": "2026-10-28T06:05:51.700Z",
-    "paidQuantity": 0,
-    "reservedQuantity": 0
-  },
-  {
     "id": "acdac51b-4039-4c8a-a08e-576adb79b946",
     "groupNumber": "GB-20261104-43C1A48C",
     "title": "Iphone 18 Duo 256GB",
@@ -86,7 +30,7 @@
     "shippingMethod": null,
     "sellerId": "55169b22-4d32-487d-8136-72c2fad59184",
     "createdAt": "2026-11-04T06:25:46.558Z",
-    "paidQuantity": 0,
+    "paidQuantity": 1,
     "reservedQuantity": 0
   }
 ]

@@ -62,7 +62,10 @@
 ### seller.js
 - `showGroupStatus()`：顯示賣家團購操作結果或錯誤。
 - `readGroupBuyResponse()`：讀取團購 API JSON 回應，HTTP 失敗時回報伺服器錯誤訊息。
+- `readSellerOrderResponse()`：讀取賣家訂單 API 回應並回報錯誤。
 - `createCell()`：建立賣家團購表格欄位。
+- `renderSellerOrder()`：呈現已達標團購的訂單與收件資訊，並提供標記出貨操作。
+- `loadSellerOrders()`：讀取目前賣家可處理的已成團訂單。
 - `renderGroupBuy()`：呈現團購商品、進度、庫存、截止時間、狀態與編輯按鈕。
 - `updateGroupFilters()`：依選取狀態篩選賣家團購列。
 - `updateGroupBuyList()`：新增或更新單筆團購列及統計資料。
@@ -85,6 +88,13 @@
 5. `POST /api/group-buys/images`：需賣家權限；以原始圖片內容上傳，`Content-Type` 支援 `image/jpeg`、`image/png`、`image/webp`，單張最多 5 MB；成功回傳 `{ image: { url, mimeType, size } }`，狀態為 `201`。
 6. `GET /api/group-buys/images/:imageName`：讀取已被團購引用的上傳圖片；未引用或不存在時回傳 `404`。
 
+### 訂單 API
+1. `POST /api/orders`：需登入；確認示範付款、驗證商品規格及名額、更新已付款量並將訂單保存至 `data/orders.json`。商品尚未達標時建立為「待成團」，達標後列入賣家中心待出貨清單。
+2. `GET /api/orders/mine`：需登入；讀取目前買家的訂單，並依團購最新進度回傳訂單狀態。
+3. `GET /api/orders/seller`：需賣家權限；只回傳目前賣家所屬且已達標的商品訂單。
+4. `PATCH /api/orders/:orderId/shipment`：需賣家權限；驗證商品歸屬與成團狀態後，將該商品訂單標記為已出貨。
+5. `POST /api/orders/:orderId/complete`：需登入且為該訂單買家；訂單全數出貨後可確認收貨。
+
 ### 賣家頁面存取
 - `GET /seller.html`：只有已登入且 Email 在 `config.json` 的 `sellerAccess.allowedEmails` 名單中的使用者能讀取；其他使用者會被導回首頁。
 - 團購管理 API 未登入時回傳 `401`，登入但不具賣家權限時回傳 `403`。
@@ -101,7 +111,9 @@
 - `startSession()`：重新產生 Session，設定使用者 ID 並保存。
 - `readUsers()`、`writeUsers()`、`updateUsers()`：讀取、原子寫入及序列化更新 `data/users.json`。
 - `readGroupBuys()`、`writeGroupBuys()`、`updateGroupBuys()`：讀取、原子寫入及序列化更新 `data/group-buys.json`。
+- `readOrders()`、`writeOrders()`、`updateOrders()`：讀取、原子寫入及序列化更新 `data/orders.json`。
 - `groupBuyStatus()`、`groupBuyWithComputedFields()`：依成團數、庫存與截止時間計算團購狀態及剩餘數量。
+- `orderWithCurrentStatus()`：依最新團購達標與各商品出貨進度計算訂單狀態。
 - `validateGroupBuy()`：驗證並正規化團購欄位、規格、圖片、日期及配送設定。
 - `getRequestUser()`、`requireSellerAccess()`：依 Session 取得使用者並保護賣家管理 API。
 - `findUserById()`：依 ID 查找使用者。
@@ -109,5 +121,5 @@
 
 ## 尚未串接的功能
 - 購物車資料只儲存在使用者瀏覽器的 `localStorage`，沒有購物車 API。
-- 「立即購買」目前不會建立訂單；付款、訂單建立與結帳 API 尚未實作。
-- 側邊欄的訂單數量目前由頁面內容計算，沒有訂單 API。
+- 付款仍是示範流程，不會進行實際金流交易；新訂單與出貨狀態會儲存在伺服器 `data/orders.json`。
+- 既有瀏覽器 `localStorage` 訂單只供買家檢視，不會出現在賣家中心。

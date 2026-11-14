@@ -1,6 +1,4 @@
 export const orderStatuses = {
-    demo: { label: "已建立（未付款）", badge: "waiting" },
-    unpaid: { label: "待付款", badge: "unpaid" },
     waiting: { label: "待成團", badge: "waiting" },
     preparing: { label: "準備出貨", badge: "preparing" },
     shipped: { label: "已出貨", badge: "shipped" },
@@ -29,15 +27,50 @@ export function getOrders(userId) {
     return parsedOrders;
 }
 
-export function saveOrder(userId, order) {
-    if (!userId) {
-        throw new Error("請先登入再建立訂單。");
+async function readOrderResponse(response) {
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok) {
+        throw new Error(result.error || `訂單請求失敗（${response.status}）。`);
     }
+    return result;
+}
 
-    const orders = getOrders(userId);
-    orders.unshift(order);
-    localStorage.setItem(ordersStorageKey(userId), JSON.stringify(orders));
-    document.dispatchEvent(new Event("orders:updated"));
+export async function fetchOrders() {
+    const result = await readOrderResponse(await fetch("api/orders/mine", { cache: "no-store" }));
+    if (!Array.isArray(result.orders)) {
+        throw new Error("訂單列表回應格式不正確。");
+    }
+    return result.orders;
+}
+
+export async function createPaidOrder(items, recipient, paymentMethod) {
+    const result = await readOrderResponse(await fetch("api/orders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            items: items.map(item => ({
+                groupBuyId: item.groupBuy?.id,
+                variantName: item.variantName || "",
+                quantity: Number(item.quantity)
+            })),
+            recipient,
+            paymentMethod
+        })
+    }));
+    if (!result.order || typeof result.order.id !== "string") {
+        throw new Error("訂單建立回應格式不正確。");
+    }
+    return result.order;
+}
+
+export async function completeOrder(orderId) {
+    const result = await readOrderResponse(await fetch(`api/orders/${encodeURIComponent(orderId)}/complete`, {
+        method: "POST"
+    }));
+    if (!result.order || typeof result.order.id !== "string") {
+        throw new Error("訂單更新回應格式不正確。");
+    }
+    return result.order;
 }
 
 export function formatOrderDate(value) {

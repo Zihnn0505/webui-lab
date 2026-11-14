@@ -100,10 +100,6 @@ function setupOrderCount() {
         return;
     }
 
-    const orderPage = location.pathname.split("/").pop() === "order.html"
-        ? document.querySelector(".order-page")
-        : null;
-
     function updateCount(user = authenticatedUser) {
         badge.removeAttribute("title");
         if (!user?.id) {
@@ -111,44 +107,40 @@ function setupOrderCount() {
             return;
         }
 
-        if (orderPage) {
-            const visibleOrders = Array.from(orderPage.querySelectorAll("#order-list .order-card"))
-                .filter(order => order.dataset.status !== "done");
-            badge.textContent = String(visibleOrders.length);
-            return;
-        }
-
-        try {
-            const storedOrders = localStorage.getItem(`webui-demo-orders:${user.id}`);
-            const orders = storedOrders ? JSON.parse(storedOrders) : [];
-            if (!Array.isArray(orders)) {
-                throw new Error("訂單資料格式錯誤，請清除瀏覽器的示範訂單資料後再試。");
-            }
-            badge.textContent = String(orders.filter(order => order?.status !== "done").length);
-        } catch (error) {
-            badge.textContent = "!";
-            badge.title = "訂單數量讀取失敗";
-            console.error(error);
-        }
+        fetch("api/orders/mine", { cache: "no-store" })
+            .then(async response => {
+                const result = await response.json().catch(() => ({}));
+                if (!response.ok) {
+                    throw new Error(result.error || `訂單數量載入失敗（${response.status}）。`);
+                }
+                if (!Array.isArray(result.orders)) {
+                    throw new Error("訂單列表回應格式錯誤。");
+                }
+                if (authenticatedUser?.id !== user.id) {
+                    return;
+                }
+                badge.textContent = String(result.orders.filter(order => order.status !== "done").length);
+            })
+            .catch(error => {
+                if (authenticatedUser?.id !== user.id) {
+                    return;
+                }
+                badge.textContent = "!";
+                badge.title = "訂單數量讀取失敗";
+                console.error(error);
+            });
     }
 
     updateCount();
     document.addEventListener("auth:user-changed", event => updateCount(event.detail.user));
     document.addEventListener("orders:updated", () => updateCount());
+    window.addEventListener("focus", () => updateCount());
     window.addEventListener("storage", event => {
         if (event.key === null || event.key === `webui-demo-orders:${authenticatedUser?.id}`) {
             updateCount();
         }
     });
 
-    if (orderPage) {
-        new MutationObserver(() => updateCount()).observe(orderPage, {
-            attributes: true,
-            attributeFilter: ["open"],
-            childList: true,
-            subtree: true
-        });
-    }
 }
 
 // 設定小視窗

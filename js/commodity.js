@@ -1,4 +1,5 @@
 import { createGroupBuyCard, mapGroupBuyCategory } from "./group-buy-card.js";
+import { getGroupBuyProgress } from "./group-buy-progress.js";
 
 const cardsContainer = document.querySelector(".cards");
 const pagination = document.querySelector(".pagination");
@@ -63,8 +64,8 @@ function renderCatalog() {
         sortedProducts.sort((left, right) => Number(right.variants?.[0]?.price ?? 0) - Number(left.variants?.[0]?.price ?? 0));
     } else if (sortMode === "progress") {
         sortedProducts.sort((left, right) => {
-            const leftProgress = Number(left.paidQuantity ?? 0) / Math.max(1, Number(left.minimumQuantity ?? 1));
-            const rightProgress = Number(right.paidQuantity ?? 0) / Math.max(1, Number(right.minimumQuantity ?? 1));
+            const leftProgress = getGroupBuyProgress(left.paidQuantity, left.minimumQuantity).percentage;
+            const rightProgress = getGroupBuyProgress(right.paidQuantity, right.minimumQuantity).percentage;
             return rightProgress - leftProgress;
         });
     }
@@ -129,4 +130,5 @@ sortSelect?.addEventListener("change", renderCatalog);
 
 if (cardsContainer && pagination && resultTotal && resultRange) {
     loadPublicGroupBuys();
+    document.addEventListener("group-buy-progress:updated", loadPublicGroupBuys);
 }

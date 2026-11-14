@@ -1,0 +1,37 @@
+[
+  {
+    "id": "D-MWFWVXME-2C3FE01F",
+    "buyerId": "55169b22-4d32-487d-8136-72c2fad59184",
+    "buyerName": "Czh",
+    "createdAt": "2026-11-14T04:34:35.126Z",
+    "paymentMethod": "信用卡（示範）",
+    "recipient": {
+      "buyerName": "Czh",
+      "name": "Czh",
+      "email": "chenzihan0505@gmail.com",
+      "phone": "0976360505",
+      "method": "7-ELEVEN 店到店",
+      "address": "守福門市"
+    },
+    "items": [
+      {
+        "groupBuyId": "acdac51b-4039-4c8a-a08e-576adb79b946",
+        "sellerId": "55169b22-4d32-487d-8136-72c2fad59184",
+        "name": "Iphone 18 Duo 256GB",
+        "spec": "星光白色",
+        "quantity": 1,
+        "price": 69900,
+        "tone": "",
+        "groupBuy": {
+          "id": "acdac51b-4039-4c8a-a08e-576adb79b946",
+          "paid": 1,
+          "minimum": 100,
+          "deadline": "2026-12-25T12:00:00.000Z"
+        },
+        "shippedAt": ""
+      }
+    ],
+    "completedAt": "",
+    "total": 69900
+  }
+]

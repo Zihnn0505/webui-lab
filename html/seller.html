@@ -87,8 +87,8 @@
                     </li>
                     <li class="seller-stat seller-stat--alert">
                         <p class="seller-stat__label">待出貨訂單</p>
-                        <p class="seller-stat__value">—</p>
-                        <p class="seller-stat__note">目前資料未包含訂單明細</p>
+                        <p class="seller-stat__value" data-seller-stat="shipping">0</p>
+                        <p class="seller-stat__note">團購達標後可安排出貨</p>
                     </li>
                     <li class="seller-stat">
                         <p class="seller-stat__label">已付款件數</p>
@@ -148,7 +148,8 @@
                 <section class="seller-section" aria-labelledby="orders-title">
                     <div class="seller-section__head">
                         <h2 id="orders-title" class="seller-section__title">訂單明細</h2>
-                        <p class="seller-section__sub">目前資料未包含訂單明細</p>
+                        <p class="seller-section__sub">共 <strong data-seller-order-count>0</strong> 筆已成團訂單</p>
+                        <p class="seller-section__sub" id="seller-order-status" role="status" aria-live="polite" hidden></p>
                     </div>
 
                     <div class="seller-table-wrap">
@@ -158,15 +159,17 @@
                                 <tr role="row">
                                     <th role="columnheader" scope="col">訂單編號</th>
                                     <th role="columnheader" scope="col">買家</th>
+                                    <th role="columnheader" scope="col">收件資訊</th>
                                     <th role="columnheader" scope="col">商品／規格</th>
                                     <th role="columnheader" scope="col">數量</th>
                                     <th role="columnheader" scope="col">金額</th>
+                                    <th role="columnheader" scope="col">訂單狀態</th>
                                     <th role="columnheader" scope="col"><span class="seller-sr">操作</span></th>
                                 </tr>
                             </thead>
-                            <tbody role="rowgroup">
+                            <tbody id="seller-order-list" role="rowgroup">
                                 <tr role="row">
-                                    <td role="cell" colspan="6">目前沒有可顯示的訂單明細。</td>
+                                    <td role="cell" colspan="8">目前沒有已成團的訂單。</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -180,7 +183,7 @@
     <script src="js/aside.js"></script>
     <script src="js/cart-state.js"></script>
     <script src="js/auth.js"></script>
-    <script src="js/seller.js"></script>
+    <script type="module" src="js/seller.js"></script>
 
 </body>
 

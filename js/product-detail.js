@@ -1,4 +1,5 @@
-import { saveOrder } from "./order-data.js";
+import { getGroupBuyProgress, updateGroupBuyProgressBar } from "./group-buy-progress.js";
+import { createPaidOrder } from "./order-data.js";
 
 const detailDialog = document.createElement("dialog");
 detailDialog.className = "product-dialog";
@@ -69,7 +70,7 @@ cartDialog.innerHTML = `
         <p class="cart-empty" hidden>購物車目前沒有商品。</p>
         <p class="cart-status" role="status" aria-live="polite" hidden></p>
         <p class="cart-total"></p>
-        <p class="cart-notice">此示範網站不會收款；填寫收件資訊後即可建立示範訂單。</p>
+        <p class="cart-notice">此為示範付款流程，不會實際收款；填寫收件資訊後即可確認示範付款。</p>
         <button class="btn cart-checkout" type="button">填寫收件資訊</button>
     </div>`;
 document.body.append(cartDialog);
@@ -123,14 +124,34 @@ checkoutDialog.innerHTML = `
                 </label>
             </div>
             <p class="checkout-form__notice">這是示範下單流程，不會進行金流交易或扣款。</p>
-            <p class="checkout-form__error" role="alert" hidden></p>
             <div class="checkout-form__actions">
-                <button class="btn checkout-form__submit" type="submit">確認建立示範訂單</button>
+                <button class="btn checkout-form__submit" type="submit">前往付款</button>
             </div>
         </form>
+        <section class="checkout-payment" aria-labelledby="checkout-payment-title" hidden>
+            <h3 id="checkout-payment-title">付款方式</h3>
+            <p class="checkout-payment__notice">這是付款畫面展示，不需要輸入付款資訊，確認後不會實際扣款。</p>
+            <fieldset class="checkout-payment__methods">
+                <legend>選擇付款方式</legend>
+                <label class="checkout-payment__method">
+                    <input type="radio" name="paymentMethod" value="card" checked>
+                    <span><strong>信用卡</strong><small>示範付款，不需輸入卡號</small></span>
+                </label>
+                <label class="checkout-payment__method">
+                    <input type="radio" name="paymentMethod" value="transfer">
+                    <span><strong>ATM 轉帳</strong><small>示範付款，不需輸入帳號</small></span>
+                </label>
+            </fieldset>
+            <p class="checkout-payment__total"><span>付款金額</span><strong></strong></p>
+            <div class="checkout-form__actions">
+                <button class="btn checkout-payment__back" type="button">返回修改收件資訊</button>
+                <button class="btn checkout-payment__confirm" type="button">確認付款</button>
+            </div>
+        </section>
+        <p class="checkout-form__error" role="alert" hidden></p>
         <section class="checkout-success" aria-live="polite" hidden>
-            <h3>示範訂單已建立</h3>
-            <p class="checkout-success__message">尚未付款，不會扣款。</p>
+            <h3>示範付款完成</h3>
+            <p class="checkout-success__message">訂單已更新為準備出貨，不會實際扣款。</p>
             <div class="checkout-form__actions">
                 <a class="btn checkout-success__detail" href="order.html">查看訂單</a>
                 <button class="btn checkout-success__close" type="button">繼續逛逛</button>
@@ -162,8 +183,11 @@ const cartStatus = cartDialog.querySelector(".cart-status");
 const cartTotal = cartDialog.querySelector(".cart-total");
 const cartCheckoutButton = cartDialog.querySelector(".cart-checkout");
 const checkoutForm = checkoutDialog.querySelector(".checkout-form");
+const checkoutTitle = checkoutDialog.querySelector("#checkout-dialog-title");
 const checkoutSummary = checkoutDialog.querySelector(".checkout-summary");
 const checkoutTotal = checkoutDialog.querySelector(".checkout-summary__total");
+const checkoutPayment = checkoutDialog.querySelector(".checkout-payment");
+const checkoutPaymentTotal = checkoutPayment.querySelector(".checkout-payment__total strong");
 const checkoutMethod = checkoutForm.elements.namedItem("pickupMethod");
 const checkoutLocation = checkoutDialog.querySelector(".checkout-location");
 const checkoutAddress = checkoutDialog.querySelector(".checkout-address");
@@ -174,6 +198,7 @@ const productAuthOpenButton = document.querySelector("#auth-open-button");
 let activeProduct;
 let groupBuysRequest;
 let currentUser = null;
+let pendingCheckout;
 let authStateReady = false;
 let pendingAction = null;
 let selectedVariantIndex = 0;
@@ -321,12 +346,15 @@ function openCheckout() {
 
         renderCheckoutSummary(cart);
         checkoutForm.reset();
+        checkoutTitle.textContent = "填寫購買與收件資訊";
         checkoutForm.elements.namedItem("buyerName").value = currentUser?.name || "";
         checkoutForm.elements.namedItem("recipientName").value = currentUser?.name || "";
         checkoutForm.elements.namedItem("email").value = currentUser?.email || "";
         checkoutForm.hidden = false;
+        checkoutPayment.hidden = true;
         checkoutSuccess.hidden = true;
         checkoutError.hidden = true;
+        pendingCheckout = null;
         updateCheckoutLocation();
         if (cartDialog.open) {
             cartDialog.close();
@@ -348,7 +376,7 @@ function updateCheckoutLocation() {
     checkoutForm.elements.namedItem("address").required = isHomeDelivery;
 }
 
-function submitDemoOrder(event) {
+function continueToDemoPayment(event) {
     event.preventDefault();
     checkoutError.hidden = true;
     updateCheckoutLocation();
@@ -356,8 +384,6 @@ function submitDemoOrder(event) {
         return;
     }
 
-    const submitButton = checkoutForm.querySelector('[type="submit"]');
-    submitButton.disabled = true;
     try {
         const items = readCart();
         if (!items.length) {
@@ -365,8 +391,6 @@ function submitDemoOrder(event) {
         }
 
         const formData = new FormData(checkoutForm);
-        const createdAt = new Date().toISOString();
-        const orderId = `D-${Date.now().toString(36).toUpperCase()}`;
         const methodLabels = {
             "711": "7-ELEVEN 店到店",
             shopee: "蝦皮店到店",
@@ -377,18 +401,8 @@ function submitDemoOrder(event) {
             ? String(formData.get("address")).trim()
             : `${String(formData.get("storeName")).trim()}${formData.get("storeCode") ? `（${String(formData.get("storeCode")).trim()}）` : ""}`;
         const total = items.reduce((sum, item) => sum + Number(item.price) * Number(item.quantity), 0);
-        const firstGroupBuy = items[0].groupBuy || {};
-        const order = {
-            id: orderId,
-            status: "demo",
-            createdAt,
-            items: items.map(item => ({
-                name: item.title,
-                spec: item.variantName || "一般規格",
-                quantity: Number(item.quantity),
-                price: Number(item.price) * Number(item.quantity),
-                tone: item.tone || ""
-            })),
+        pendingCheckout = {
+            items,
             total,
             recipient: {
                 buyerName: String(formData.get("buyerName")).trim(),
@@ -399,35 +413,49 @@ function submitDemoOrder(event) {
                 address: location,
                 storeName: isHomeDelivery ? "" : String(formData.get("storeName")).trim(),
                 storeCode: isHomeDelivery ? "" : String(formData.get("storeCode")).trim()
-            },
-            groupBuy: {
-                paid: Number(firstGroupBuy.paidQuantity || 0),
-                minimum: Number(firstGroupBuy.minimumQuantity || 0),
-                deadline: firstGroupBuy.deadline || ""
-            },
-            timeline: [
-                { label: "建立示範訂單", complete: true, at: createdAt },
-                { label: "付款（未串接）", complete: false },
-                { label: "成團", complete: false },
-                { label: "出貨", complete: false },
-                { label: "完成", complete: false }
-            ]
+            }
         };
+        checkoutPaymentTotal.textContent = `$${total.toLocaleString("zh-TW")}`;
+        checkoutForm.hidden = true;
+        checkoutPayment.hidden = false;
+        checkoutTitle.textContent = "確認示範付款";
+    } catch (error) {
+        checkoutError.textContent = error.message || "準備付款資訊失敗，請稍後再試。";
+        checkoutError.hidden = false;
+    }
+}
 
-        saveOrder(currentUser.id, order);
+async function confirmDemoPayment() {
+    checkoutError.hidden = true;
+    const confirmButton = checkoutPayment.querySelector(".checkout-payment__confirm");
+    confirmButton.disabled = true;
+    try {
+        if (!pendingCheckout) {
+            throw new Error("付款資料已失效，請重新填寫收件資訊。");
+        }
+        const order = await createPaidOrder(
+            pendingCheckout.items,
+            pendingCheckout.recipient,
+            checkoutPayment.querySelector('[name="paymentMethod"]:checked').value
+        );
         localStorage.removeItem(`webui-cart-items:${currentUser.id}`);
         document.dispatchEvent(new Event("cart:updated"));
+        document.dispatchEvent(new Event("group-buy-progress:updated"));
+        document.dispatchEvent(new Event("orders:updated"));
         checkoutDialog.querySelector(".checkout-success__detail").href =
             `order-detail.html?id=${encodeURIComponent(order.id)}`;
         checkoutDialog.querySelector(".checkout-success__message").textContent =
-            `訂單編號 ${order.id}。這是示範流程，尚未付款，也不會扣款。`;
-        checkoutForm.hidden = true;
+            order.status === "waiting"
+                ? `訂單編號 ${order.id}。付款已完成，訂單目前待成團；達標後賣家即可出貨。這是示範付款，不會實際扣款。`
+                : `訂單編號 ${order.id}。團購已達標，訂單已送交賣家準備出貨。這是示範付款，不會實際扣款。`;
+        checkoutPayment.hidden = true;
         checkoutSuccess.hidden = false;
+        checkoutTitle.textContent = "示範付款完成";
     } catch (error) {
         checkoutError.textContent = error.message || "建立示範訂單失敗，請稍後再試。";
         checkoutError.hidden = false;
     } finally {
-        submitButton.disabled = false;
+        confirmButton.disabled = false;
     }
 }
 
@@ -677,13 +705,9 @@ function renderProduct(product) {
     productDescription.textContent = product.description || "加入團購，享有團購優惠價格。";
     const paidQuantity = Number(product.paidQuantity || 0);
     const minimumQuantity = Number(product.minimumQuantity || 0);
-    const remainingToGoal = Math.max(0, minimumQuantity - paidQuantity);
-    const progressValue = minimumQuantity > 0 ? Math.min(100, Math.floor(paidQuantity / minimumQuantity * 100)) : 0;
-    productProgressBar.style.setProperty("--value", String(progressValue));
-    productProgressBar.setAttribute("aria-valuenow", String(progressValue));
-    productProgress.textContent = remainingToGoal > 0
-        ? `已付款 ${paidQuantity}／${minimumQuantity} 件，還差 ${remainingToGoal} 件成團`
-        : `已付款 ${paidQuantity} 件，已達成團門檻`;
+    const progress = getGroupBuyProgress(paidQuantity, minimumQuantity);
+    updateGroupBuyProgressBar(productProgressBar, progress);
+    productProgress.textContent = progress.detail;
     const [statusLabel, statusClass] = getProductStatus(product);
     productBadge.textContent = statusLabel;
     productBadge.className = `product-detail__badge ${statusClass}`;
@@ -924,7 +948,29 @@ addButton.addEventListener("click", () => requestAuthenticatedAction("add"));
 buyButton.addEventListener("click", () => requestAuthenticatedAction("buy"));
 cartCheckoutButton.addEventListener("click", openCheckout);
 checkoutMethod.addEventListener("change", updateCheckoutLocation);
-checkoutForm.addEventListener("submit", submitDemoOrder);
+checkoutForm.addEventListener("submit", continueToDemoPayment);
+checkoutPayment.querySelector(".checkout-payment__back").addEventListener("click", () => {
+    checkoutPayment.hidden = true;
+    checkoutForm.hidden = false;
+    checkoutTitle.textContent = "填寫購買與收件資訊";
+});
+checkoutPayment.querySelector(".checkout-payment__confirm").addEventListener("click", confirmDemoPayment);
+document.addEventListener("group-buy-progress:updated", async () => {
+    groupBuysRequest = null;
+    if (!detailDialog.open || !activeProduct?.id) {
+        return;
+    }
+
+    try {
+        const groupBuys = await loadGroupBuys();
+        const updatedProduct = groupBuys.find(groupBuy => groupBuy.id === activeProduct.id);
+        if (updatedProduct && detailDialog.open && activeProduct?.id === updatedProduct.id) {
+            renderProduct(updatedProduct);
+        }
+    } catch (error) {
+        showProductMessage(error.message || "更新團購進度失敗，請稍後再試。");
+    }
+});
 checkoutSuccess.querySelector(".checkout-success__close").addEventListener("click", () => checkoutDialog.close());
 variantChoices.addEventListener("click", event => {
     const choice = event.target.closest("[data-variant-index]");
